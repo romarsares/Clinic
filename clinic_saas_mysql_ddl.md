@@ -68,7 +68,28 @@ FOREIGN KEY (role_id) REFERENCES roles(id),
 UNIQUE KEY uq_user_role (user_id, role_id)
 );
 
--- 6. Patients
+-- 6. Permissions (System-wide)
+CREATE TABLE permissions (
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+name VARCHAR(100) NOT NULL,
+display_name VARCHAR(255) NOT NULL,
+description VARCHAR(500),
+category VARCHAR(50),
+UNIQUE KEY uq_permission_name (name)
+);
+
+-- 7. Role Permissions
+CREATE TABLE role_permissions (
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+role_id BIGINT NOT NULL,
+permission_id BIGINT NOT NULL,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (role_id) REFERENCES roles(id),
+FOREIGN KEY (permission_id) REFERENCES permissions(id),
+UNIQUE KEY uq_role_permission (role_id, permission_id)
+);
+
+-- 8. Patients
 CREATE TABLE patients (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 clinic_id BIGINT NOT NULL,
@@ -87,7 +108,7 @@ UNIQUE KEY uq_patient_code_clinic (clinic_id, patient_code),
 INDEX idx_patient_clinic (clinic_id)
 );
 
--- 7. Appointments
+-- 9. Appointments
 CREATE TABLE appointments (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 clinic_id BIGINT NOT NULL,
@@ -106,7 +127,7 @@ FOREIGN KEY (doctor_id) REFERENCES auth_users(id),
 INDEX idx_appointment_clinic_date (clinic_id, scheduled_date)
 );
 
--- 8. Visits
+-- 10. Visits
 CREATE TABLE visits (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 clinic_id BIGINT NOT NULL,
@@ -124,7 +145,7 @@ FOREIGN KEY (doctor_id) REFERENCES auth_users(id),
 INDEX idx_visit_clinic_date (clinic_id, visit_date)
 );
 
--- 9. Visit Notes
+-- 11. Visit Notes
 CREATE TABLE visit_notes (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 visit_id BIGINT NOT NULL,
@@ -138,7 +159,7 @@ FOREIGN KEY (clinic_id) REFERENCES clinics(id),
 INDEX idx_visit_notes (visit_id)
 );
 
--- 10. Visit Attachments
+-- 12. Visit Attachments
 CREATE TABLE visit_attachments (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 visit_id BIGINT NOT NULL,
@@ -153,7 +174,7 @@ FOREIGN KEY (uploaded_by) REFERENCES auth_users(id),
 INDEX idx_visit_attachment (visit_id)
 );
 
--- 11. Services
+-- 13. Services
 CREATE TABLE services (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 clinic_id BIGINT NOT NULL,
@@ -166,7 +187,7 @@ FOREIGN KEY (clinic_id) REFERENCES clinics(id),
 UNIQUE KEY uq_service_name_clinic (clinic_id, name)
 );
 
--- 12. Billings
+-- 14. Billings
 CREATE TABLE billings (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 clinic_id BIGINT NOT NULL,
@@ -184,7 +205,7 @@ FOREIGN KEY (visit_id) REFERENCES visits(id),
 INDEX idx_billing_clinic_status (clinic_id, status)
 );
 
--- 13. Billing Items
+-- 15. Billing Items
 CREATE TABLE billing_items (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 billing_id BIGINT NOT NULL,
@@ -199,7 +220,7 @@ FOREIGN KEY (service_id) REFERENCES services(id),
 INDEX idx_billing_item_billing (billing_id)
 );
 
--- 14. Payments
+-- 16. Payments
 CREATE TABLE payments (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 billing_id BIGINT NOT NULL,
@@ -215,7 +236,7 @@ FOREIGN KEY (received_by) REFERENCES auth_users(id),
 INDEX idx_payment_billing (billing_id)
 );
 
--- 15. Audit Logs
+-- 17. Audit Logs
 CREATE TABLE audit_logs (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 clinic_id BIGINT NOT NULL,

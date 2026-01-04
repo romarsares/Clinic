@@ -28,6 +28,14 @@ DELETE /roles/{id} -> Delete role
 POST /user_roles -> Assign role to user
 DELETE /user_roles/{id} -> Remove role from user
 
+## Permissions
+GET /permissions -> List all system permissions (global)
+
+## Role Permissions
+GET /role_permissions -> List permissions assigned to clinic roles
+POST /role_permissions -> Assign permission to role
+DELETE /role_permissions/{id} -> Remove permission from role
+
 ---
 # 2. Clinic Management
 
