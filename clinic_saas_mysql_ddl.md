@@ -252,3 +252,18 @@ FOREIGN KEY (clinic_id) REFERENCES clinics(id),
 FOREIGN KEY (user_id) REFERENCES auth_users(id),
 INDEX idx_audit_clinic_user (clinic_id, user_id)
 );
+
+-- 18. SMS Logs (Optional)
+CREATE TABLE sms_logs (
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+clinic_id BIGINT NOT NULL,
+recipient VARCHAR(20) NOT NULL,
+message TEXT NOT NULL,
+status ENUM('sent','delivered','failed') DEFAULT 'sent',
+provider_message_id VARCHAR(255),
+sent_by BIGINT,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (clinic_id) REFERENCES clinics(id),
+FOREIGN KEY (sent_by) REFERENCES auth_users(id),
+INDEX idx_sms_clinic_status (clinic_id, status)
+);

@@ -116,6 +116,14 @@ GET /audit_logs -> List logs (admin/owner)
 GET /audit_logs/{id} -> Log details
 
 ---
+# 8. SMS Notifications (Optional Integration)
+POST /sms/send -> Send SMS notification
+GET /sms/logs -> SMS delivery logs
+GET /sms/templates -> List SMS templates
+POST /sms/templates -> Create SMS template
+PUT /sms/templates/{id} -> Update SMS template
+
+---
 # Notes
 - All endpoints must include `clinic_id` in request headers or JWT for multi-tenant scoping.
 - Pagination and filtering supported on all GET lists.
