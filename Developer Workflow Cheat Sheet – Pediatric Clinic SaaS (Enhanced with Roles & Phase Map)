@@ -1,0 +1,140 @@
+# Developer Workflow Cheat Sheet – Pediatric Clinic SaaS (Enhanced with Roles & Phase Map)
+
+This document is a **high-standard, developer-ready workflow guide** for building the Pediatric Clinic / Clinic Operations SaaS using **ChatGPT + VS Code + Phase-Based Vibe Coding**, now with a **role + phase + doc map**.
+
+---
+
+## 1️⃣ Project Setup
+
+1. Clone Git repo and open in VS Code
+2. Verify folder structure (`/src/backend`, `/src/frontend`, `/docs`, etc.)
+3. Install dependencies and connect Git + CI/CD
+4. Open ChatGPT extension / browser for AI assistance
+
+---
+
+## 2️⃣ AI Usage & Rules (`claude.md`)
+
+* Assign a role before giving instructions:
+
+```
+You are now operating as [ROLE]: Backend Architect / Frontend Engineer / QA / Product Architect
+```
+
+* Follow **claude.md rules**: no features outside PRD, no skipping phases, respect RBAC, stop & ask if unclear
+
+---
+
+## 3️⃣ Phase-Based Development (`tasks.md`)
+
+* Follow **tasks.md phases**:
+
+  * Phase 0: Validation & Setup
+  * Phase 1: Core Foundation
+  * Phase 2: Critical Paths
+  * Phase 3: UX Completion
+  * Phase 4: Hardening
+  * Phase 5: Pre-launch QA
+  * Phase 6: Launch
+  * Phase 7: Future Pediatric Enhancements
+* Update **decisions.md** and **risks.md** after each phase
+* Verify exit criteria before moving on
+
+---
+
+## 4️⃣ Decisions & Risks
+
+### decisions.md
+
+* Record choices, alternatives rejected, owner, and date
+
+### risks.md
+
+* Log risks, severity, and mitigation
+
+---
+
+## 5️⃣ AI-Assisted Coding
+
+* AI generates **code snippets, config, and UI scaffolding** per phase and role
+* Human reviews and merges
+* Maintain QA / Breaker checks for security, data integrity, UX, and tenant safety
+
+---
+
+## 6️⃣ QA / Breaker Role
+
+* Test invalid inputs, permission bypasses, multi-tenant isolation
+* Log all issues in **risks.md**
+
+---
+
+## 7️⃣ Launch Readiness
+
+* Confirm Phase 6 exit criteria
+* Deploy to pilot tenants
+* Monitor metrics and collect feedback
+* Update **decisions.md** and **risks.md**
+
+---
+
+## 8️⃣ Role + Phase + Document Map (ASCII Visual)
+
+```
++-------------------+       +-------------------+       +-------------------+
+|     PRD.md        | --->  |    Claude.md      | --->  |    Tasks.md       |
+| - Defines MVP     |       | - Laws & rules    |       | - Phase tasks     |
+| - Scope & Non-goals|      | - Role enforcement|       | - Exit criteria   |
++-------------------+       +-------------------+       +-------------------+
+           |                           |                           |
+           v                           v                           v
+     +-------------------+      +-------------------+      +-------------------+
+     |  AI Agent Role     | ---> |  Human Review     | ---> | Decisions.md      |
+     | - Backend / Frontend|     | - Approve & merge |      | - Choices recorded|
+     | - QA / Product     |     | - Update docs     |      +-------------------+
+     +-------------------+      +-------------------+                 |
+           |                                                        v
+           v                                               +-------------------+
+     +-------------------+                                   | Risks.md         |
+     | QA / Breaker      |                                   | - Risks tracked  |
+     | - Break assumptions|                                  | - Mitigation     |
+     +-------------------+                                   +-------------------+
+           |                                                        |
+           v                                                        v
+     +-------------------+                                     +-------------------+
+     | Next Phase / Launch|                                    | Phase Repeat      |
+     | - Follow tasks.md  |                                    | until MVP stable  |
+     +-------------------+                                     +-------------------+
+```
+
+* Top-down flow: PRD → Claude → Tasks → AI → Human → Decisions → Risks → QA → Next Phase
+* AI acts only after **role assignment & task scope**
+* Decisions & risks updated continuously
+* Repeat per phase until launch
+
+---
+
+## 9️⃣ Daily Workflow Summary
+
+1. Open `tasks.md` → identify phase & tasks
+2. Check `claude.md` → confirm AI rules
+3. Write instruction to ChatGPT specifying role & task
+4. AI generates code or scaffold
+5. Human reviews → merges to Git
+6. Update `decisions.md` / `risks.md`
+7. Run QA / Breaker tests
+8. Confirm phase exit criteria → move to next phase
+
+---
+
+**This enhanced cheat sheet ensures:**
+
+* Phase-controlled, structured development
+* Safe AI-assisted coding
+* Readable visual workflow in VS Code
+* Pediatric-safe operational data handling
+* Decisions & risks always tracked
+
+---
+
+**End of Enhanced Developer Workflow Cheat Sheet**
