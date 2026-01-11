@@ -36,3 +36,12 @@
 **Reason:** Simple onboarding, globally adaptable, reduces support overhead  
 **Rejected:** Full-featured complex UI – higher learning curve
 
+## 2026-01-15
+**Decision:** Corrected `visit_notes` table to remove clinical terms from `note_type` ENUM.
+**Reason:** The DDL included `'diagnosis'` and `'treatment'`, which directly contradicted the core requirement in `prd.md` to store "operational notes ONLY". This change enforces the non-clinical scope at the database level, mitigating compliance risks (e.g., PH Data Privacy Act for health data) and aligning the schema with the product's strategic decision to avoid being a full EHR.
+**Rejected:** Relying on application-level validation alone was deemed too risky.
+
+## 2026-01-15
+**Decision:** Corrected `patients` table by adding `parent_patient_id`.
+**Reason:** The PRD and workflow documents specify a "Parent account → child profiles" relationship as a core feature for pediatric clinics. The original schema was missing this link. Adding a self-referencing foreign key (`parent_patient_id`) directly implements this requirement, enabling the parent portal and other pediatric-specific features.
+**Rejected:** A separate mapping table was considered but rejected as overly complex for a simple hierarchical need.

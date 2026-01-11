@@ -99,13 +99,16 @@ birth_date DATE,
 gender ENUM('male','female','other'),
 contact_number VARCHAR(50),
 email VARCHAR(100),
+parent_patient_id BIGINT,
 notes TEXT,
 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 deleted_at DATETIME,
 FOREIGN KEY (clinic_id) REFERENCES clinics(id),
+FOREIGN KEY (parent_patient_id) REFERENCES patients(id),
 UNIQUE KEY uq_patient_code_clinic (clinic_id, patient_code),
-INDEX idx_patient_clinic (clinic_id)
+INDEX idx_patient_clinic (clinic_id),
+INDEX idx_patient_parent (parent_patient_id)
 );
 
 -- 9. Appointments
