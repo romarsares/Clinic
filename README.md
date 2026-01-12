@@ -26,7 +26,7 @@ This project includes detailed documentation on API endpoints, database schema, 
 - **express** - Web framework for API development
 - **mysql2** - MySQL database driver
 - **bcrypt** - Password hashing for secure authentication
-- **jsonwebtoken** - JWT token generation and validation
+- **jsonwebtoken** - JWT (JSON Web Token) generation and validation
 - **joi** - Data validation and sanitization
 - **cors** - Cross-origin resource sharing
 - **helmet** - Security middleware
@@ -37,7 +37,7 @@ This project includes detailed documentation on API endpoints, database schema, 
 - **react-router-dom** - Client-side routing
 - **axios** - HTTP client for API communication
 - **react-hook-form** - Form handling and validation
-- **material-ui** or **antd** - UI component library
+- **@mui/material** or **antd** - UI component library
 
 ### Cloud Services
 - **Database**: AWS RDS MySQL or Google Cloud SQL for managed MySQL hosting
@@ -50,7 +50,7 @@ This project includes detailed documentation on API endpoints, database schema, 
 ### Authentication & Security
 - **JWT Authentication**: Stateless token-based auth with access and refresh tokens
 - **Password Security**: bcrypt for hashing, with salt rounds
-- **Rate Limiting**: Express rate limiter to prevent abuse
+- **Rate Limiting**: Middleware (e.g., `express-rate-limit`) to prevent abuse
 - **Input Validation**: Server-side validation with Joi to prevent injection attacks
 - **HTTPS**: SSL/TLS certificates for secure data transmission
 
@@ -68,7 +68,7 @@ This project includes detailed documentation on API endpoints, database schema, 
 
 ## SMS Integration
 
-Adding SMS services enhances clinic operations by enabling automated notifications and improving patient engagement. Here's how it fits into the system:
+SMS integration is a critical component for enhancing clinic operations by enabling automated notifications and improving patient engagement.
 
 ### Use Cases
 - **Appointment Reminders**: Send SMS 24 hours before scheduled appointments
@@ -79,7 +79,7 @@ Adding SMS services enhances clinic operations by enabling automated notificatio
 
 ### Implementation
 - **Provider**: Twilio (recommended) or similar SMS gateway
-- **Cost**: ~$0.0075 per SMS (varies by country)
+- **Cost**: Varies by provider and country (e.g., ~$0.0075 per SMS)
 - **Integration**: REST API calls to SMS provider
 - **Opt-in**: Patient consent required for marketing messages
 
