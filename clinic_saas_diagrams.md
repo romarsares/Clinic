@@ -1,5 +1,288 @@
 # Clinic SaaS Architecture Diagrams (Text Format)
 
+## Documentation Guide
+
+This document contains comprehensive architectural diagrams for the Pediatric Clinic SaaS platform. All diagrams are presented in ASCII text format for easy version control and tool-agnostic viewing.
+
+### How to Use These Diagrams
+
+1. **Reading Text Diagrams**: Start from top-left, follow arrows (→, ↓, ───) to understand flow
+2. **Converting to Visual**: Copy any diagram into Draw.io, Lucidchart, or PlantUML for professional rendering
+3. **Navigation**: Each diagram is numbered and has clear section headers
+4. **Cross-References**: Diagrams reference each other where relevant
+
+---
+
+## Diagram Index & Documentation
+
+### 1. Entity-Relationship Diagram (ERD) - Core Database Schema
+
+**Purpose**: Visual representation of the complete database structure showing all tables, columns, and relationships.
+
+**What it Shows**:
+- 25+ database tables with their primary keys (PK) and foreign keys (FK)
+- Relationships between entities (clinics, users, patients, clinical data, etc.)
+- Multi-tenant architecture with clinic_id as the isolation key
+- Clinical workflow data structures (diagnoses, labs, billing)
+
+**How to Read**:
+- Boxes represent database tables
+- Lines with arrows show foreign key relationships
+- "1" indicates "one-to-many" relationships
+- PK = Primary Key, FK = Foreign Key
+- Table names are in lowercase, column names descriptive
+
+**Key Insights**:
+- Clinics are the root tenant entity
+- Patients can have parent-child relationships (parent_patient_id)
+- RBAC system with roles → permissions through user_roles and role_permissions
+- Clinical data is comprehensive (diagnoses, vitals, medications, allergies)
+- Audit logging captures all changes for compliance
+
+**Business Impact**: Ensures data integrity and supports complex clinical workflows while maintaining tenant isolation.
+
+---
+
+### 2. System Architecture Diagram
+
+**Purpose**: High-level overview of the entire system architecture from user interfaces to infrastructure.
+
+**What it Shows**:
+- Four main layers: Client, API Gateway, Application, Data/Infrastructure
+- Technology stack choices (React, Node.js, MySQL, Redis)
+- Multi-tenant SaaS architecture
+- Security and monitoring components
+
+**How to Read**:
+- Flow is top-to-bottom (Client → Infrastructure)
+- Boxes represent components or services
+- Arrows show data/communication flow
+- Layered approach ensures separation of concerns
+
+**Key Insights**:
+- Multi-tenant from ground up (clinic isolation)
+- Scalable architecture with load balancers and caching
+- Security-first design with encryption and access controls
+- External integrations for payments, SMS, and lab systems
+
+**Business Impact**: Provides foundation for reliable, secure healthcare platform that can scale with clinic growth.
+
+---
+
+### 3. Clinical Workflow Sequence Diagram
+
+**Purpose**: Detailed patient journey from arrival to visit completion, showing all clinical and operational steps.
+
+**What it Shows**:
+- Complete patient visit workflow
+- Role responsibilities (Patient, Reception, Doctor, Lab, Billing)
+- Data flow between systems and people
+- Critical clinical decision points
+
+**How to Read**:
+- Time flows left to right, then top to bottom
+- Boxes represent people/systems, arrows show actions
+- Parallel paths show concurrent activities
+- Decision points branch based on clinical needs
+
+**Key Insights**:
+- Clear separation between operational (appointments, billing) and clinical (diagnoses, treatments) workflows
+- Lab integration is asynchronous (order → process → results)
+- Audit trail required for all clinical actions
+- Patient consent and data privacy considerations
+
+**Business Impact**: Ensures efficient clinic operations while maintaining clinical quality and regulatory compliance.
+
+---
+
+### 4. API Endpoint Flow Diagram
+
+**Purpose**: Complete API architecture showing endpoints, request flow, and security controls.
+
+**What it Shows**:
+- RESTful API structure organized by resource type
+- Request processing pipeline (auth → validation → business logic → database)
+- Multi-tenant context handling
+- Security layers (JWT, RBAC, rate limiting)
+
+**How to Read**:
+- Top section shows API endpoints grouped by functionality
+- Middle shows request flow control
+- Bottom shows data access patterns
+- Arrows indicate processing sequence
+
+**Key Insights**:
+- Clinic ID injected into all requests for tenant isolation
+- Clinical data endpoints have enhanced security controls
+- Pagination and filtering for performance
+- Audit logging on all API calls
+
+**Business Impact**: Provides secure, scalable API foundation for web/mobile applications and third-party integrations.
+
+---
+
+### 5. Data Flow Diagram (Compliance-Focused)
+
+**Purpose**: Healthcare data lifecycle showing classification, protection, and compliance controls.
+
+**What it Shows**:
+- PHI (Protected Health Information) data classification
+- Encryption and access control layers
+- Regulatory compliance frameworks (PH Data Privacy Act, HIPAA-like)
+- Data retention and destruction policies
+
+**How to Read**:
+- Data flows left to right through processing stages
+- Security layers wrap around data handling
+- Compliance controls shown as parallel requirements
+- Risk levels (public → confidential → PHI) determine protection levels
+
+**Key Insights**:
+- PHI data requires encryption at rest and in transit
+- Role-based access prevents unauthorized clinical data access
+- Audit logging is immutable for compliance
+- Data minimization principle applied
+
+**Business Impact**: Ensures regulatory compliance and builds patient trust through data protection.
+
+---
+
+### 6. Component Interaction Diagram
+
+**Purpose**: Current system structure and future microservices migration path.
+
+**What it Shows**:
+- Current monolithic application architecture
+- Future microservices decomposition
+- Service boundaries and communication patterns
+- Data consistency strategies
+
+**How to Read**:
+- Current state shows layered monolith
+- Future state shows service mesh with individual microservices
+- Arrows indicate service dependencies and communication
+- Migration phases show incremental decomposition
+
+**Key Insights**:
+- Auth service extracted first (security-critical)
+- Clinical service isolated for PHI protection
+- Event-driven architecture for lab results
+- Saga pattern for distributed transactions
+
+**Business Impact**: Provides roadmap for scalable, maintainable architecture evolution.
+
+---
+
+### 7. Deployment Architecture Diagram
+
+**Purpose**: Production infrastructure design for high availability and scalability.
+
+**What it Shows**:
+- Load balancing and auto-scaling setup
+- Database architecture (separate DBs per tenant)
+- Backup and disaster recovery
+- Monitoring and logging infrastructure
+
+**How to Read**:
+- Traffic flow from internet to database
+- Redundancy shown with multiple instances
+- Backup flows indicated with separate paths
+- Monitoring overlays all components
+
+**Key Insights**:
+- Separate databases per clinic for complete isolation
+- Multi-region deployment for disaster recovery
+- Automated scaling based on load
+- Comprehensive monitoring for healthcare reliability
+
+**Business Impact**: Ensures 99.9% uptime and data protection for critical healthcare operations.
+
+---
+
+### 8. User Interface Flow Diagrams
+
+**Purpose**: User experience journeys for different roles in the system.
+
+**What it Shows**:
+- Four distinct user portals (Patient, Staff, Doctor, Admin)
+- Navigation patterns and key user tasks
+- UI/UX considerations for healthcare workflows
+- Accessibility and usability features
+
+**How to Read**:
+- Each role has its own journey map
+- Arrows show primary navigation paths
+- Parallel paths show alternative workflows
+- Key screens highlighted as major decision points
+
+**Key Insights**:
+- Role-specific interfaces reduce cognitive load
+- Clinical workflows prioritize data accuracy
+- Mobile-responsive design for all roles
+- Accessibility compliance for healthcare users
+
+**Business Impact**: Ensures efficient, error-free workflows that support clinical decision-making.
+
+---
+
+### 9. Integration Diagrams
+
+**Purpose**: External system connections and data exchange patterns.
+
+**What it Shows**:
+- Payment processors, SMS gateways, lab systems
+- Healthcare standards (HL7, ICD-10, LOINC)
+- Government system integrations (future)
+- Security and compliance for integrations
+
+**How to Read**:
+- External systems shown at top, integration layer in middle
+- Adapter pattern for protocol translation
+- Security controls wrap all integrations
+- Data flows show request/response patterns
+
+**Key Insights**:
+- Adapter pattern isolates external system changes
+- Healthcare standards ensure interoperability
+- Webhook security for real-time updates
+- Fallback mechanisms for integration failures
+
+**Business Impact**: Enables seamless connection with healthcare ecosystem while maintaining security.
+
+---
+
+## Implementation Notes
+
+### Converting to Visual Diagrams
+
+**Recommended Tools**:
+- **Draw.io**: Free, web-based, supports importing text diagrams
+- **Lucidchart**: Professional diagramming with healthcare templates
+- **PlantUML**: Code-based diagram generation from text
+- **Mermaid**: Similar to PlantUML, integrates with Markdown
+
+**Conversion Process**:
+1. Copy diagram text to chosen tool
+2. Adjust styling for healthcare/clinical themes
+3. Add colors for different data types (PHI = red, Public = green)
+4. Export as PNG/PDF for documentation
+
+### Maintenance Guidelines
+
+- Update diagrams when schema changes occur
+- Version control all diagram changes
+- Review diagrams during architecture decision records (ADRs)
+- Include diagrams in code reviews for new features
+
+### Compliance Considerations
+
+- PHI data flows clearly marked and protected
+- Audit trails shown for all clinical operations
+- Multi-tenant isolation demonstrated
+- Regulatory requirements (PH Data Privacy Act) addressed
+
+---
+
 ## 1. Entity-Relationship Diagram (ERD) - Core Schema
 
 ```
