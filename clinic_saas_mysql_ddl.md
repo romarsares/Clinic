@@ -58,6 +58,7 @@ UNIQUE KEY uq_role_name_clinic (clinic_id, name)
 );
 
 -- 5. User Role Assignments
+-- A user has no permissions until a role is assigned here. This enforces a "default-deny" security model.
 CREATE TABLE user_roles (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
 user_id BIGINT NOT NULL,
@@ -377,7 +378,7 @@ clinic_id BIGINT NOT NULL,
 patient_id BIGINT NOT NULL,
 visit_id BIGINT NOT NULL,
 request_number VARCHAR(50) NOT NULL,
-requested_by BIGINT NOT NULL, -- Doctor
+requested_by BIGINT NOT NULL, -- User with 'order_labs' permission (Doctor)
 request_date DATETIME DEFAULT CURRENT_TIMESTAMP,
 status ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
 urgency ENUM('routine', 'urgent', 'stat') DEFAULT 'routine',
@@ -409,8 +410,8 @@ id BIGINT AUTO_INCREMENT PRIMARY KEY,
 lab_request_id BIGINT NOT NULL,
 clinic_id BIGINT NOT NULL,
 result_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-entered_by BIGINT NOT NULL, -- Lab Technician
-verified_by BIGINT, -- Doctor
+entered_by BIGINT NOT NULL, -- User with 'enter_lab_results' permission (Lab Technician)
+verified_by BIGINT, -- User with 'verify_lab_results' permission (Doctor)
 overall_status ENUM('normal', 'abnormal', 'critical') DEFAULT 'normal',
 remarks TEXT,
 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -438,6 +439,52 @@ INDEX idx_lab_result_detail_result (lab_result_id)
 );
 
 -- END OF DDL --
+
+-- DEFAULT DATA FOR PERMISSIONS (Enables Checkbox-style UI for Admins) --
+INSERT INTO `permissions` (`name`, `display_name`, `description`, `category`) VALUES
+-- Patient Management
+('patients.view', 'View Patients', 'Can view patient demographic data and lists.', 'Patient'),
+('patients.create', 'Create Patients', 'Can create new patient profiles.', 'Patient'),
+('patients.edit', 'Edit Patients', 'Can edit patient demographic information.', 'Patient'),
+('patients.delete', 'Delete Patients', 'Can soft-delete patient profiles.', 'Patient'),
+
+-- Appointment Management
+('appointments.view', 'View Appointments', 'Can view the clinic appointment schedule.', 'Appointment'),
+('appointments.create', 'Create Appointments', 'Can schedule new appointments for patients.', 'Appointment'),
+('appointments.edit', 'Edit Appointments', 'Can reschedule or update existing appointments.', 'Appointment'),
+('appointments.cancel', 'Cancel Appointments', 'Can cancel an appointment.', 'Appointment'),
+
+-- Clinical Documentation (Sensitive)
+('clinical.diagnoses.create', 'Create Diagnoses', 'Can add a clinical diagnosis to a patient visit. (Doctor-level)', 'Clinical'),
+('clinical.diagnoses.edit', 'Edit Diagnoses', 'Can edit an existing clinical diagnosis.', 'Clinical'),
+('clinical.vitals.create', 'Record Vital Signs', 'Can record patient vital signs like BP, temp, etc.', 'Clinical'),
+('clinical.history.view', 'View Medical History', 'Can view a patient''s full medical history, including past diagnoses and treatments.', 'Clinical'),
+
+-- Laboratory Management (Sensitive)
+('labs.requests.create', 'Create Lab Requests', 'Can order new laboratory tests for a patient. (Doctor-level)', 'Laboratory'),
+('labs.requests.view', 'View Lab Requests', 'Can view the status of lab requests.', 'Laboratory'),
+('labs.results.enter', 'Enter Lab Results', 'Can enter the results for a completed lab test. (Lab Tech-level)', 'Laboratory'),
+('labs.results.verify', 'Verify Lab Results', 'Can review and verify the accuracy of entered lab results. (Doctor-level)', 'Laboratory'),
+
+-- Billing & Payments
+('billing.invoices.view', 'View Invoices', 'Can view patient invoices and billing history.', 'Billing'),
+('billing.invoices.create', 'Create Invoices', 'Can create new invoices for services rendered.', 'Billing'),
+('billing.payments.create', 'Record Payments', 'Can record a payment made against an invoice.', 'Billing'),
+
+-- Reporting
+('reports.operational.view', 'View Operational Reports', 'Can view reports on appointments, revenue, etc.', 'Reports'),
+('reports.clinical.view', 'View Clinical Reports', 'Can view reports on disease prevalence, common diagnoses, etc. (Sensitive)', 'Reports'),
+
+-- Administration
+('admin.users.manage', 'Manage Users', 'Can create, edit, and suspend users within the clinic.', 'Admin'),
+('admin.roles.manage', 'Manage Roles & Permissions', 'Can create and edit roles and their assigned permissions.', 'Admin'),
+('admin.settings.manage', 'Manage Clinic Settings', 'Can configure clinic-wide settings.', 'Admin');
+
+-- This provides a comprehensive list for a UI where an admin can assign permissions to roles. Per claude.md rules:
+-- A "Staff" role should get permissions like 'patients.view', 'appointments.create', and 'billing.invoices.view'. It should NOT get any 'clinical.*' permissions.
+-- A "Doctor" role would get Staff permissions plus all 'clinical.*' and 'labs.requests.create' permissions.
+
+
 
 
 -- Optional Tables --
