@@ -241,13 +241,14 @@
   - [ ] Lab order and result workflow
   - [ ] Medical history accuracy
 - [ ] Breaker Agent testing:  
-  - [ ] Try to access other tenant data (including clinical records)
-  - [ ] Attempt to enter diagnosis as non-doctor role
-  - [ ] Attempt to enter lab results as non-lab-tech
-  - [ ] Test invalid appointment creation  
-  - [ ] Test invalid billing entries  
-  - [ ] Test notifications failures
-  - [ ] Attempt to access deleted medical records
+- **Security & Penetration Testing:**
+  - [ ] Attempt to access other tenant's data (cross-tenant attacks)
+  - [ ] Attempt privilege escalation (e.g., Staff entering a diagnosis)
+  - [ ] Test for SQL injection, XSS, and other common vulnerabilities
+  - [ ] Validate that non-doctor roles cannot create diagnoses
+  - [ ] Validate that non-lab-tech roles cannot enter lab results
+  - [ ] Test business logic flaws (e.g., invalid billing, appointment conflicts)
+  - [ ] Attempt to access medical records that should be restricted
 - [ ] Verify audit logs capture all critical actions (especially clinical)
 - [ ] Confirm operational AND clinical flows match PRD
 - [ ] **Compliance testing:**
