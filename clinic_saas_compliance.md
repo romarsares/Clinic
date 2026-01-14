@@ -5,6 +5,78 @@ As a healthcare operations SaaS handling **clinical patient data**, this system 
 
 ---
 
+## Data Flow & Compliance Architecture
+
+### Data Flow Diagram (Compliance-Focused)
+
+**Purpose**: Healthcare data lifecycle showing classification, protection, and compliance controls.
+
+**What it Shows**:
+- PHI (Protected Health Information) data classification
+- Encryption and access control layers
+- Regulatory compliance frameworks (PH Data Privacy Act, HIPAA-like)
+- Data retention and destruction policies
+
+**How to Read**:
+- Data flows left to right through processing stages
+- Security layers wrap around data handling
+- Compliance controls shown as parallel requirements
+- Risk levels (public → confidential → PHI) determine protection levels
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DATA CLASSIFICATION                          │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Public Data   │  │   Internal Data │  │   Confidential  │ │
+│  │   (Clinic info, │  │   (User data,   │  │   Data (PHI)    │ │
+│  │    services)    │  │    appointments)│  │                 │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     DATA FLOW CONTROL                           │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Input         │  │   Processing    │  │   Storage       │ │
+│  │   Validation    │  │   & Business    │  │   Encryption    │ │
+│  │   & Sanitization│  │   Logic         │  │   (AES-256)     │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Access        │  │   Audit         │  │   Backup        │ │
+│  │   Control       │  │   Logging       │  │   & Recovery    │ │
+│  │   (RBAC)        │  │   (immutable)   │  │   (encrypted)    │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  COMPLIANCE CONTROLS                            │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   PH Data       │  │   HIPAA-like    │  │   GDPR          │ │
+│  │   Privacy Act   │  │   Controls      │  │   Compliance    │ │
+│  │   (Philippines) │  │   (Healthcare)  │  │   (EU Data)     │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Data          │  │   Consent       │  │   Data          │ │
+│  │   Retention     │  │   Management    │  │   Portability   │ │
+│  │   Policies      │  │   (Patient)     │  │   (Export)      │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Insights**:
+- PHI data requires encryption at rest and in transit
+- Role-based access prevents unauthorized clinical data access
+- Audit logging is immutable for compliance
+- Data minimization principle applied
+
+---
+
 ## 1. Philippine Data Privacy Act (RA 10173)
 
 ### Core Principles

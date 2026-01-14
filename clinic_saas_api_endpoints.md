@@ -8,6 +8,111 @@ Design Principles:
 - Clear and direct for developers
 
 ---
+
+# API Architecture Diagrams
+
+## API Endpoint Flow Diagram
+
+**Purpose**: Complete API architecture showing endpoints, request flow, and security controls.
+
+**What it Shows**:
+- RESTful API structure organized by resource type
+- Request processing pipeline (auth → validation → business logic → database)
+- Multi-tenant context handling
+- Security layers (JWT, RBAC, rate limiting)
+
+**How to Read**:
+- Top section shows API endpoints grouped by functionality
+- Middle shows request flow control
+- Bottom shows data access patterns
+- Arrows indicate processing sequence
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                          API ENDPOINTS                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Authentication & Authorization                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │  POST /auth/    │  │  POST /auth/    │  │  POST /auth/    │ │
+│  │  login          │  │  refresh        │  │  logout         │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  Patient Management                                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │  GET /patients  │  │  POST /patients │  │  PUT /patients/ │ │
+│  │  (list/search)  │  │  (create)       │  │  {id} (update)  │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  Appointment Management                                         │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │  GET /appoint-  │  │  POST /appoint- │  │  PUT /appoint-  │ │
+│  │  ments          │  │  ments          │  │  ments/{id}     │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  Clinical Operations                                            │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │  POST /visits   │  │  POST /visits/  │  │  GET /visits/   │ │
+│  │  (start visit)  │  │  {id}/vitals   │  │  {id}/diagnoses │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  Laboratory Management                                          │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │  POST /lab/     │  │  PUT /lab/      │  │  GET /lab/       │ │
+│  │  requests       │  │  results/{id}   │  │  results/{id}    │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  Billing & Payments                                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │  GET /billing   │  │  POST /billing/ │  │  PUT /billing/  │ │
+│  │  (invoices)     │  │  {id}/payment  │  │  {id}/status     │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      API FLOW CONTROL                           │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   JWT Token     │  │   Clinic ID     │  │   User Role     │ │
+│  │   Validation    │  │   Extraction    │  │   Authorization │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Rate Limiting │  │   Input         │  │   Audit Logging │ │
+│  │   (per clinic)  │  │   Validation    │  │   (all actions) │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      BUSINESS LOGIC                             │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Service Layer │  │   Repository    │  │   Domain        │ │
+│  │   (Use Cases)   │  │   Layer         │  │   Logic         │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        DATA ACCESS                              │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Multi-tenant  │  │   Query         │  │   Connection    │ │
+│  │   Filtering     │  │   Optimization  │  │   Pooling       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Insights**:
+- Clinic ID injected into all requests for tenant isolation
+- Clinical data endpoints have enhanced security controls
+- Pagination and filtering for performance
+- Audit logging on all API calls
+
+---
+
 # 1. Authentication & Access Control
 
 ## Auth Users

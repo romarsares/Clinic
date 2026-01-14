@@ -10,6 +10,228 @@ Design Goals:
 
 ---
 
+# Database Architecture Diagrams
+
+## Entity-Relationship Diagram (ERD) - Complete Schema
+
+**Purpose**: Visual representation of the complete database structure showing all tables, columns, and relationships.
+
+**What it Shows**:
+- 25+ database tables with their primary keys (PK) and foreign keys (FK)
+- Relationships between entities (clinics, users, patients, clinical data, etc.)
+- Multi-tenant architecture with clinic_id as the isolation key
+- Clinical workflow data structures (diagnoses, labs, billing)
+
+**How to Read**:
+- Boxes represent database tables
+- Lines with arrows show foreign key relationships
+- "1" indicates "one-to-many" relationships
+- PK = Primary Key, FK = Foreign Key
+- Table names are in lowercase, column names descriptive
+
+```
+┌─────────────────┐       ┌──────────────────┐
+│    clinics      │       │ clinic_settings  │
+│─────────────────│       │──────────────────│
+│ id (PK)         │1──────┼── clinic_id (FK) │
+│ name            │       │ key              │
+│ address         │       │ value            │
+│ email           │       │ created_at       │
+│ status          │       └──────────────────┘
+│ subscription    │
+│ created_at      │
+└─────────────────┘
+         │1
+         │
+         │
+         ▼
+┌─────────────────┐       ┌──────────────────┐
+│   auth_users    │       │      roles       │
+│─────────────────│       │──────────────────│
+│ id (PK)         │───────┼── clinic_id (FK) │
+│ clinic_id (FK)  │       │ id (PK)          │
+│ email           │       │ name             │
+│ full_name       │       │ description      │
+│ status          │       └──────────────────┘
+│ created_at      │               │
+└─────────────────┘               │
+         │                        │
+         │                        │
+         ▼                        ▼
+┌─────────────────┐       ┌──────────────────┐
+│   user_roles    │       │ role_permissions │
+│─────────────────│       │──────────────────│
+│ user_id (FK)    │       │ role_id (FK)     │
+│ role_id (FK)    │       │ permission_id(FK)│
+└─────────────────┘       └──────────────────┘
+                                  │
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │   permissions    │
+                         │──────────────────│
+                         │ id (PK)          │
+                         │ name             │
+                         │ display_name     │
+                         │ category         │
+                         └──────────────────┘
+
+┌─────────────────┐       ┌──────────────────┐
+│    patients     │       │   appointments   │
+│─────────────────│       │──────────────────│
+│ id (PK)         │1──────┼── clinic_id (FK) │
+│ clinic_id (FK)  │       │ patient_id (FK)  │
+│ patient_code    │       │ doctor_id (FK)   │
+│ full_name       │       │ scheduled_date   │
+│ birth_date      │       │ status           │
+│ gender          │       │ remarks          │
+│ parent_id (FK)  │◄──────┼──────────────────┤
+└─────────────────┘       │                  │
+         ▲                └──────────────────┘
+         │                        │
+         │                        │
+         ▼                        ▼
+┌─────────────────┐       ┌──────────────────┐
+│     visits      │       │   visit_notes    │
+│─────────────────│       │──────────────────│
+│ id (PK)         │───────┼── visit_id (FK)  │
+│ clinic_id (FK)  │       │ clinic_id (FK)   │
+│ appointment_id  │       │ note_type        │
+│ patient_id (FK) │       │ content          │
+│ doctor_id (FK)  │       └──────────────────┘
+│ visit_date      │
+│ status          │
+└─────────────────┘
+         │
+         │
+         ▼
+    ┌─────────────────┐
+    │ visit_diagnoses │
+    │─────────────────│
+    │ id (PK)         │
+    │ visit_id (FK)   │
+    │ clinic_id (FK)  │
+    │ diagnosis_type  │
+    │ diagnosis_code  │
+    │ diagnosis_name  │
+    │ clinical_notes  │
+    │ diagnosed_by    │
+    └─────────────────┘
+
+    ┌─────────────────┐
+    │visit_vital_signs│
+    │─────────────────│
+    │ id (PK)         │
+    │ visit_id (FK)   │
+    │ clinic_id (FK)  │
+    │ temperature     │
+    │ blood_pressure  │
+    │ heart_rate      │
+    │ weight/height   │
+    │ recorded_by     │
+    └─────────────────┘
+
+┌─────────────────┐       ┌──────────────────┐
+│patient_allergies│       │patient_medications│
+│─────────────────│       │───────────────────│
+│ id (PK)         │       │ id (PK)           │
+│ patient_id (FK) │       │ patient_id (FK)   │
+│ clinic_id (FK)  │       │ clinic_id (FK)    │
+│ allergen        │       │ medication_name   │
+│ reaction        │       │ dosage            │
+│ severity        │       │ frequency         │
+└─────────────────┘       │ prescribed_by     │
+                          └───────────────────┘
+
+┌─────────────────┐       ┌──────────────────┐
+│     services    │       │    billings      │
+│─────────────────│       │──────────────────│
+│ id (PK)         │       │ id (PK)          │
+│ clinic_id (FK)  │1──────┼── clinic_id (FK) │
+│ service_type    │       │ patient_id (FK)  │
+│ name            │       │ visit_id (FK)    │
+│ price           │       │ total_amount     │
+└─────────────────┘       │ status           │
+         ▲                └──────────────────┘
+         │                        │
+         │                        │
+         ▼                        ▼
+┌─────────────────┐       ┌──────────────────┐
+│ billing_items   │       │    payments      │
+│─────────────────│       │──────────────────│
+│ id (PK)         │       │ billing_id (FK)  │
+│ service_id (FK) │       │ clinic_id (FK)   │
+│ description     │       │ amount           │
+│ quantity        │       │ payment_method   │
+│ unit_price      │       │ payment_date     │
+└─────────────────┘       └──────────────────┘
+
+┌─────────────────┐       ┌──────────────────┐
+│   lab_tests     │       │  lab_requests    │
+│─────────────────│       │──────────────────│
+│ id (PK)         │       │ id (PK)          │
+│ clinic_id (FK)  │1──────┼── clinic_id (FK) │
+│ test_code       │       │ patient_id (FK)  │
+│ test_name       │       │ visit_id (FK)    │
+│ category        │       │ request_number   │
+│ price           │       │ requested_by     │
+└─────────────────┘       │ status           │
+         ▲                │ urgency          │
+         │                └──────────────────┘
+         │                        │
+         │                        │
+         ▼                        ▼
+┌─────────────────┐       ┌──────────────────┐
+│lab_request_items│       │   lab_results    │
+│─────────────────│       │──────────────────│
+│ id (PK)         │       │ id (PK)          │
+│ lab_request_id  │       │ lab_request_id   │
+│ lab_test_id     │       │ clinic_id (FK)   │
+│ status          │       │ result_date      │
+└─────────────────┘       │ entered_by       │
+                          │ verified_by      │
+                          └──────────────────┘
+                                  │
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │lab_result_details│
+                         │──────────────────│
+                         │ id (PK)          │
+                         │ lab_result_id    │
+                         │ lab_test_id      │
+                         │ parameter_name   │
+                         │ result_value     │
+                         │ unit             │
+                         │ normal_range     │
+                         │ is_abnormal      │
+                         └──────────────────┘
+
+┌─────────────────┐
+│   audit_logs    │
+│─────────────────│
+│ id (PK)         │
+│ clinic_id (FK)  │
+│ user_id (FK)    │
+│ action          │
+│ entity          │
+│ entity_id       │
+│ old_value       │
+│ new_value       │
+│ ip_address      │
+│ created_at      │
+└─────────────────┘
+```
+
+**Key Insights**:
+- Clinics are the root tenant entity with complete data isolation
+- Patients support parent-child relationships for pediatric care
+- Comprehensive RBAC system with granular permissions
+- Clinical data structures support full diagnostic workflows
+- Audit logging ensures compliance and traceability
+
+---
+
 # Core Tables Overview
 
 ## Authentication & Access
