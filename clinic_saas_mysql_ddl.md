@@ -219,6 +219,41 @@ FOREIGN KEY (patient_id) REFERENCES patients(id),
 FOREIGN KEY (clinic_id) REFERENCES clinics(id)
 );
 
+-- 14.5 Patient Medications (NEW)
+CREATE TABLE patient_medications (
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+patient_id BIGINT NOT NULL,
+clinic_id BIGINT NOT NULL,
+medication_name VARCHAR(255) NOT NULL,
+dosage VARCHAR(100),
+frequency VARCHAR(100),
+start_date DATE,
+end_date DATE,
+prescribed_by BIGINT,
+status ENUM('active', 'discontinued') DEFAULT 'active',
+notes TEXT,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+FOREIGN KEY (patient_id) REFERENCES patients(id),
+FOREIGN KEY (clinic_id) REFERENCES clinics(id),
+FOREIGN KEY (prescribed_by) REFERENCES auth_users(id)
+);
+
+-- 14.6 Patient Medical History (NEW)
+CREATE TABLE patient_medical_history (
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+patient_id BIGINT NOT NULL,
+clinic_id BIGINT NOT NULL,
+history_type ENUM('past_illness', 'surgery', 'hospitalization', 'family_history') NOT NULL,
+condition_name VARCHAR(255) NOT NULL,
+diagnosed_date DATE,
+notes TEXT,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+FOREIGN KEY (patient_id) REFERENCES patients(id),
+FOREIGN KEY (clinic_id) REFERENCES clinics(id)
+);
+
 -- 15. Visit Attachments
 CREATE TABLE visit_attachments (
 id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -384,6 +419,22 @@ FOREIGN KEY (lab_request_id) REFERENCES lab_requests(id),
 FOREIGN KEY (clinic_id) REFERENCES clinics(id),
 FOREIGN KEY (entered_by) REFERENCES auth_users(id),
 FOREIGN KEY (verified_by) REFERENCES auth_users(id)
+);
+
+-- 25. Lab Result Details (NEW)
+CREATE TABLE lab_result_details (
+id BIGINT AUTO_INCREMENT PRIMARY KEY,
+lab_result_id BIGINT NOT NULL,
+lab_test_id BIGINT NOT NULL,
+parameter_name VARCHAR(255) NOT NULL,
+result_value VARCHAR(255) NOT NULL,
+unit VARCHAR(50),
+normal_range VARCHAR(100),
+is_abnormal BOOLEAN DEFAULT FALSE,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (lab_result_id) REFERENCES lab_results(id),
+FOREIGN KEY (lab_test_id) REFERENCES lab_tests(id),
+INDEX idx_lab_result_detail_result (lab_result_id)
 );
 
 -- END OF DDL --
