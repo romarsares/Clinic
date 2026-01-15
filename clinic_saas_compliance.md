@@ -451,3 +451,94 @@ This compliance framework ensures the Clinic SaaS meets legal requirements for *
 8. Restricted patient right to erasure for medical records
 9. Added healthcare-specific frameworks (HL7, ISO 27701)
 10. Added compliance monitoring metrics for clinical data
+
+---
+
+## External System Integrations
+
+### Integration Diagrams
+
+**Purpose**: External system connections and data exchange patterns.
+
+**What it Shows**:
+- Payment processors, SMS gateways, lab systems
+- Healthcare standards (HL7, ICD-10, LOINC)
+- Government system integrations (future)
+- Security and compliance for integrations
+
+**How to Read**:
+- External systems shown at top, integration layer in middle
+- Adapter pattern for protocol translation
+- Security controls wrap all integrations
+- Data flows show request/response patterns
+
+```
+External System Integrations:
+============================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    PAYMENT PROCESSORS                           │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   PayPal        │  │   Stripe        │  │   GCash         │ │
+│  │   Integration   │  │   (Credit Card) │  │   (Philippines)  │ │
+│  │   (Global)      │  │   (International│  │   (Local)       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   COMMUNICATION SERVICES                        │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   SMS Gateway   │  │   Email Service │  │   Push          │ │
+│  │   (Twilio)      │  │   (SendGrid)    │  │   Notifications  │ │
+│  │   (Reminders)   │  │   (Invoices)    │  │   (Mobile App)   │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   LABORATORY SYSTEMS                             │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   LIS Systems   │  │   HL7 Standard │  │   API            │ │
+│  │   (Hospital Labs│  │   Integration   │  │   Integration    │ │
+│  │   )             │  │   (v2/v3)       │  │   (REST)         │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   HEALTHCARE STANDARDS                           │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   ICD-10        │  │   LOINC         │  │   SNOMED CT     │ │
+│  │   (Diagnosis)   │  │   (Lab Tests)   │  │   (Clinical     │ │
+│  │   Codes         │  │   Codes         │  │   Terminology)  │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   GOVERNMENT SYSTEMS                             │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   PhilHealth    │  │   DOH Systems   │  │   Insurance      │ │
+│  │   (Future)      │  │   (Reporting)   │  │   Providers      │ │
+│  │   Integration   │  │   (Phase 2+)   │  │   (Phase 2+)     │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Integration Architecture:**
+- Adapter pattern isolates external system changes
+- Healthcare standards ensure interoperability
+- Webhook security for real-time updates
+- Fallback mechanisms for integration failures
+
+**Key Insights**:
+- Payment integrations require PCI compliance
+- Lab systems use HL7 for clinical data exchange
+- SMS gateways need delivery tracking
+- All integrations must maintain PHI protection

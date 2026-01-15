@@ -59,6 +59,327 @@ This plan is the complete guide for the creation of the Clinic Operations SaaS b
 
 ---
 
+## System Architecture Diagrams
+
+### Component Interaction Diagram
+
+**Purpose**: Current system structure and future microservices migration path.
+
+**What it Shows**:
+- Current monolithic application architecture
+- Future microservices decomposition
+- Service boundaries and communication patterns
+- Data consistency strategies
+
+**How to Read**:
+- Current state shows layered monolith
+- Future state shows service mesh with individual microservices
+- Arrows indicate service dependencies and communication
+- Migration phases show incremental decomposition
+
+```
+Microservices Architecture (Future State):
+=======================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    SERVICE MESH                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   API Gateway   │  │   Service       │  │   Configuration │ │
+│  │   (Istio/Envoy) │  │   Discovery     │  │   Management    │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   MICROSERVICES                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Auth Service  │  │   User Mgmt     │  │   Patient Mgmt  │ │
+│  │   (JWT, OAuth)  │  │   Service       │  │   Service       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Appointment   │  │   Clinical      │  │   Lab Mgmt      │ │
+│  │   Service       │  │   Service       │  │   Service       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Billing       │  │   Notification  │  │   Reporting     │ │
+│  │   Service       │  │   Service       │  │   Service       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                 SHARED INFRASTRUCTURE                           │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Message Bus   │  │   Cache         │  │   Database      │ │
+│  │   (Kafka/Rabbit)│  │   (Redis)       │  │   (MySQL)       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   File Storage  │  │   Monitoring    │  │   Logging       │ │
+│  │   (S3/MinIO)    │  │   (Prometheus)  │  │   (ELK)         │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+
+Current Monolithic Architecture:
+==============================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    MONOLITHIC APPLICATION                       │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Web Layer     │  │   API Layer     │  │   Service Layer │ │
+│  │   (React)       │  │   (Express)     │  │   (Business      │ │
+│  │                 │  │                 │  │    Logic)       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Repository    │  │   Database      │  │   Cache         │ │
+│  │   Layer         │  │   Layer         │  │   Layer         │ │
+│  │   (Data Access) │  │   (MySQL)       │  │   (Redis)       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Migration Path to Microservices:**
+- Phase 1: Extract Auth Service (highest security requirements)
+- Phase 2: Domain Separation (Patient, Clinical, Lab services)
+- Phase 3: Infrastructure Services (Billing, Reporting)
+- Phase 4: Event-Driven Architecture
+
+**Key Insights**:
+- Auth service extracted first (security-critical)
+- Clinical service isolated for PHI protection
+- Event-driven architecture for lab results
+- Saga pattern for distributed transactions
+
+### Deployment Architecture Diagram
+
+**Purpose**: Production infrastructure design for high availability and scalability.
+
+**What it Shows**:
+- Load balancing and auto-scaling setup
+- Database architecture (separate DBs per tenant)
+- Backup and disaster recovery
+- Monitoring and logging infrastructure
+
+**How to Read**:
+- Traffic flow from internet to database
+- Redundancy shown with multiple instances
+- Backup flows indicated with separate paths
+- Monitoring overlays all components
+
+```
+Production Deployment Architecture:
+=================================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    LOAD BALANCER LAYER                          │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Cloud Load    │  │   SSL           │  │   DDoS           │ │
+│  │   Balancer      │  │   Termination   │  │   Protection     │ │
+│  │   (AWS ALB)     │  │   (Let's Encrypt)│  │   (Cloudflare)   │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   APPLICATION LAYER                             │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Web Servers   │  │   API Servers   │  │   Background     │ │
+│  │   (Nginx)       │  │   (Node.js)     │  │   Workers        │ │
+│  │   Auto-scaling  │  │   Auto-scaling  │  │   (Queue)        │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   CACHE & SESSION LAYER                         │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Redis Cluster │  │   Session Store │  │   API Cache     │ │
+│  │   (High Avail)  │  │   (Encrypted)   │  │   (Fast Data)   │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   DATABASE LAYER                                │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Primary DB    │  │   Read Replicas │  │   Backup DB      │ │
+│  │   (MySQL)       │  │   (3 nodes)     │  │   (Cross-region) │ │
+│  │   Multi-tenant  │  │   Load balanced │  │   Disaster       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   STORAGE & BACKUP LAYER                        │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   File Storage  │  │   Database      │  │   Log Storage   │ │
+│  │   (S3)          │  │   Backups       │  │   (S3 Glacier)  │ │
+│  │   Encrypted     │  │   Encrypted     │  │   Compressed    │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   MONITORING & LOGGING                          │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Application   │  │   Infrastructure │  │   Log           │ │
+│  │   Monitoring    │  │   Monitoring     │  │   Aggregation   │ │
+│  │   (New Relic)   │  │   (CloudWatch)   │  │   (ELK Stack)   │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Multi-Tenant Database Strategy:**
+- Separate databases per clinic for complete isolation
+- Connection pooling per tenant
+- Automated provisioning scripts
+- Cross-region replication for disaster recovery
+
+**Key Insights**:
+- Separate databases per clinic for complete isolation
+- Multi-region deployment for disaster recovery
+- Automated scaling based on load
+- Comprehensive monitoring for healthcare reliability
+
+---
+
+## User Interface Flow Diagrams
+
+**Purpose**: User experience journeys for different roles in the system.
+
+**What it Shows**:
+- Four distinct user portals (Patient, Staff, Doctor, Admin)
+- Navigation patterns and key user tasks
+- UI/UX considerations for healthcare workflows
+- Accessibility and usability features
+
+**How to Read**:
+- Each role has its own journey map
+- Arrows show primary navigation paths
+- Parallel paths show alternative workflows
+- Key screens highlighted as major decision points
+
+```
+Patient Portal User Journey:
+==========================
+
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Landing   │────▶│   Login/    │────▶│   Dashboard │
+│   Page      │     │   Register  │     │   (Home)    │
+└─────────────┘     └─────────────┘     └─────────────┘
+                        │                       │
+                        │                       │
+                        ▼                       ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│Book Appoint-│     │   Profile   │     │   Medical   │
+│   ment      │◀────│   Settings  │────▶│   History   │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                                      │
+                                                      │
+                                                      ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Lab       │     │   Billing   │     │   Messages  │
+│   Results   │────▶│   & Pay-    │────▶│   & Noti-   │
+│             │     │   ments     │     │   fications │
+└─────────────┘     └─────────────┘     └─────────────┘
+
+Staff Portal User Journey:
+========================
+
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Login     │────▶│   Dashboard │────▶│   Patient   │
+│   (Staff)   │     │   (Today's  │     │   Search    │
+│             │     │    Tasks)   │     │             │
+└─────────────┘     └─────────────┘     └─────────────┘
+                        │                       │
+                        │                       │
+                        ▼                       ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Appoint-  │     │   Patient   │     │   Billing   │
+│   ment      │◀────│   Records   │────▶│   Queue     │
+│   Calendar  │     │   (View)    │     │             │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                                      │
+                                                      │
+                                                      ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Reports   │     │   Settings  │     │   Help/     │
+│   & Stats   │────▶│   (Clinic)  │────▶│   Support   │
+└─────────────┘     └─────────────┘     └─────────────┘
+
+Doctor Portal User Journey:
+=========================
+
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Login     │────▶│   Dashboard │────▶│   Today's   │
+│   (Doctor)  │     │   (Schedule)│     │   Patients  │
+└─────────────┘     └─────────────┘     └─────────────┘
+                        │                       │
+                        │                       │
+                        ▼                       ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Patient   │     │   Start     │     │   Record    │
+│   Queue     │◀────│   Visit     │────▶│   Vitals    │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                                      │
+                                                      │
+                                                      ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Diagnosis │     │   Lab       │     │   Prescribe │
+│   & Plan    │────▶│   Orders    │────▶│   Treatment │
+└─────────────┘     └─────────────┘     └─────────────┘
+                        │                       │
+                        │                       │
+                        ▼                       ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Review    │     │   Close     │     │   Reports   │
+│   Results   │────▶│   Visit     │────▶│   & Stats   │
+└─────────────┘     └─────────────┘     └─────────────┘
+
+Admin Portal User Journey:
+========================
+
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Login     │────▶│   Dashboard │────▶│   User      │
+│   (Admin)   │     │   (Overview)│     │   Management│
+└─────────────┘     └─────────────┘     └─────────────┘
+                        │                       │
+                        │                       │
+                        ▼                       ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Clinic    │     │   Roles &   │     │   Services  │
+│   Settings  │◀────│   Permissions│────▶│   & Pricing │
+└─────────────┘     └─────────────┘     └─────────────┘
+                                                      │
+                                                      │
+                                                      ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Reports   │     │   Billing   │     │   System    │
+│   & Analytics│────▶│   & Revenue│────▶│   Health    │
+└─────────────┘     └─────────────┘     └─────────────┘
+```
+
+**Key UI Patterns:**
+- Role-specific interfaces reduce cognitive load
+- Clinical workflows prioritize data accuracy
+- Mobile-responsive design for all roles
+- Accessibility compliance for healthcare users
+
+---
+
 # 3. Development Stage
 
 **Purpose:** Build the system according to design with clean, maintainable code.
