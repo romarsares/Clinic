@@ -31,6 +31,7 @@ const ROLE_PERMISSIONS = {
   ],
   staff: [
     'read_patients',
+    'write_patients',    // ✅ Staff can add patients (registration/intake)
     'read_appointments',
     'write_appointments',
     'read_billing'

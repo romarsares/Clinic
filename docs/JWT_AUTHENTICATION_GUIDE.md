@@ -94,8 +94,8 @@ const decoded = jwt.verify(token, process.env.JWT_SECRET);
 // Different roles get different permissions
 const rolePermissions = {
   "owner": ["all"],
-  "doctor": ["read_patients", "write_prescriptions", "read_lab_results"],
-  "staff": ["read_patients", "schedule_appointments"],
+  "doctor": ["read_patients", "write_patients", "write_prescriptions", "read_lab_results"],
+  "staff": ["read_patients", "write_patients", "schedule_appointments"],
   "lab_technician": ["read_lab_orders", "write_lab_results"],
   "parent": ["read_own_children", "schedule_appointments"]
 };

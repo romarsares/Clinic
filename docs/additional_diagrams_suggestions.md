@@ -2,7 +2,138 @@
 
 ## Suggested Additional Diagrams
 
-### 10. Security Threat Model Diagram
+### 10. Use Case Diagram
+
+**Purpose**: Comprehensive overview of all user roles and their interactions with the Pediatric Clinic SaaS system.
+
+**What it Shows**:
+- All user actors (roles) in the system
+- Primary use cases for each role
+- System boundaries and external systems
+- Role-based access control relationships
+
+**Actors**:
+- **Clinic Owner**: Business management and oversight
+- **Doctor**: Clinical care and diagnosis
+- **Staff**: Administrative and operational tasks
+- **Lab Technician**: Laboratory test management
+- **Parent**: Patient management and appointment booking
+- **Admin**: System administration
+- **External Systems**: SMS Gateway, Payment Processors, Lab Systems
+
+```
+Pediatric Clinic SaaS - Use Case Diagram:
+========================================
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              CLINIC OWNER                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • Manage Clinic Settings                                                        │
+│ • View Financial Reports                                                        │
+│ • Manage Staff Accounts                                                         │
+│ • Configure Billing Rules                                                       │
+│ • Access System Analytics                                                       │
+│ • Manage Clinic Profile                                                         │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                DOCTOR                                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • Conduct Patient Visits                                                        │
+│ • Enter Diagnoses (Primary/Secondary)                                           │
+│ • Create Treatment Plans                                                        │
+│ • Order Laboratory Tests                                                        │
+│ • Review Lab Results                                                            │
+│ • Write Clinical Notes                                                          │
+│ • Access Patient Medical History                                                │
+│ • Generate Medical Reports                                                     │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                 STAFF                                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • Register New Patients                                                         │
+│ • Schedule Appointments                                                         │
+│ • Update Patient Demographics                                                   │
+│ • Process Billing & Payments                                                    │
+│ • Manage Appointments                                                           │
+│ • Generate Operational Reports                                                  │
+│ • Send Notifications                                                            │
+│ • View Patient Lists (Limited Clinical Data)                                    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            LAB TECHNICIAN                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • Receive Lab Orders                                                            │
+│ • Enter Lab Results                                                             │
+│ • Flag Abnormal Values                                                          │
+│ • Attach Lab Reports/Documents                                                  │
+│ • Update Test Status                                                            │
+│ • View Ordered Tests                                                            │
+│ • Generate Lab Reports                                                         │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                PARENT                                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • Register Child Profile                                                        │
+│ • Book Appointments                                                             │
+│ • View Appointment History                                                      │
+│ • Access Limited Medical Records                                                │
+│ • Update Contact Information                                                    │
+│ • Receive Notifications                                                         │
+│ • View Billing Information                                                      │
+│ • Request Medical Records                                                       │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                       PEDIATRIC CLINIC SAAS SYSTEM                             │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                      CORE SYSTEM FUNCTIONS                             │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │ • User Authentication & Authorization                                   │   │
+│  │ • Multi-Tenant Clinic Isolation                                         │   │
+│  │ • Patient Management (Parent-Child Relationships)                       │   │
+│  │ • Appointment Scheduling & Management                                   │   │
+│  │ • Clinical Documentation (Diagnoses, Treatments, Notes)                 │   │
+│  │ • Laboratory Order & Result Management                                  │   │
+│  │ • Billing & Payment Processing                                          │   │
+│  │ • Medical Record Management                                             │   │
+│  │ • Reporting & Analytics                                                 │   │
+│  │ • Notification System (SMS/Email)                                       │   │
+│  │ • Audit Logging & Compliance                                            │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │                    EXTERNAL SYSTEM INTEGRATIONS                         │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │ ←────── SMS Gateway (Twilio/SendGrid) ────────────────────────────────→ │   │
+│  │ ←────── Payment Processors (Stripe/PayPal) ───────────────────────────→ │   │
+│  │ ←────── Lab Information Systems (HL7/API) ────────────────────────────→ │   │
+│  │ ←────── Electronic Health Records (Optional) ─────────────────────────→ │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Relationships & Rules**:
+- **Clinic Owner** extends system management capabilities
+- **Doctor** has full clinical access but cannot manage billing
+- **Staff** handles operations but limited clinical data access
+- **Lab Technician** specialized role for laboratory functions only
+- **Parent** has restricted access to own child's data only
+- **All roles** require authentication and clinic-specific access
+- **Clinical data** protected by role-based permissions
+- **Audit logging** applies to all clinical actions
+
+### 11. Security Threat Model Diagram
 
 **Purpose**: Visual representation of security threats and mitigations for healthcare data.
 
