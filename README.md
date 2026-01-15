@@ -1,52 +1,185 @@
-# Clinic SaaS
+# Pediatric Clinic SaaS
 
 Clinic SaaS is a comprehensive, multi-tenant software-as-a-service platform designed for small and medium-sized clinics (SMEs). It serves as the "operating system" for a clinic, replacing chaotic manual processes with structured workflows for appointment management, patient records, **clinical documentation (diagnoses, treatments), laboratory management,** billing, and reporting.
 
-## Key Features
-- **Multi-Tenant Architecture**: Supports multiple clinics on shared infrastructure with isolated data.
-- **User & Role Management**: Hierarchical roles (Owner, Doctor, Staff, Lab Technician) with role-based access control (RBAC).
-- **Appointment Management**: Core functionality for scheduling and reducing no-shows.
-- **Patient Management**: Comprehensive patient records including demographics and full medical history.
-- **Clinical Documentation**: Structured records for diagnoses, treatment plans, and visit notes.
-- **Laboratory Management**: End-to-end workflow for lab requests and results.
-- **Billing & Invoicing**: Tracks charges for consultations, procedures, and lab tests.
-- **Reporting & Analytics**: Dashboards for both operational and clinical metrics.
-- **Audit Logs**: Ensures accountability with enhanced tracking for all clinical data access.
+## 🏗️ Project Structure
 
-## Design Philosophy
-- **Compliance-Ready**: Built to comply with healthcare data regulations like the PH Data Privacy Act, ensuring patient data is secure.
-- Documentation-first approach for faster onboarding and scaling.
-- Configurable and adaptable for global markets, starting from the Philippines and expanding to SEA, LATAM, Africa, and beyond.
-- Priced to deliver significant value (Target: ₱1,999–₱4,999/month) by combining operational and clinical management.
+```
+clinic-saas/
+├── docs/                          # Documentation
+│   ├── clinic_saas_api_endpoints.md
+│   ├── clinic_saas_blueprint_explained.md
+│   ├── clinic_saas_compliance.md
+│   ├── clinic_saas_db_schema.md
+│   ├── clinic_saas_development_plan.md
+│   ├── clinic_saas_mysql_ddl.md
+│   ├── additional_diagrams_suggestions.md
+│   ├── prd.md
+│   ├── task.md
+│   ├── risk.md
+│   ├── decisions.md
+│   ├── completion_summary.md
+│   ├── pediatric_clinic_saas_workflow.md
+│   └── developer-workflow-cheat-sheet.md
+├── src/                           # Source code
+│   └── server.js
+├── config/                        # Configuration files
+│   ├── .env.example
+│   └── redis/
+├── docker/                        # Docker configuration
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── .dockerignore
+├── scripts/                       # Deployment scripts
+│   ├── deploy-ubuntu.sh
+│   ├── test-deployment.sh
+│   └── DEPLOYMENT.md
+├── tests/                         # Test files
+│   └── healthcheck.js
+├── package.json                   # Node.js dependencies
+└── README.md                      # This file
+```
 
-This project includes detailed documentation on product requirements, API endpoints, database schema, and compliance standards to guide development.
+## 🚀 Quick Start
 
-## External Dependencies
+### Prerequisites
+- Node.js 18+
+- Docker & Docker Compose
+- MySQL 8.0+
 
-### Backend Libraries (Node.js/Express Example)
-- **express** - Web framework for API development
-- **mysql2** - MySQL database driver
-- **bcrypt** - Password hashing for secure authentication
-- **jsonwebtoken** - JWT (JSON Web Token) generation and validation
-- **joi** - Data validation and sanitization
-- **cors** - Cross-origin resource sharing
-- **helmet** - Security middleware
-- **multer** - File upload handling for visit attachments
+### Local Development
+```bash
+# Clone the repository
+git clone <repository-url>
+cd clinic-saas
 
-### Frontend Libraries (React Example)
-- **react** - UI library for building the user interface
-- **react-router-dom** - Client-side routing
-- **axios** - HTTP client for API communication
-- **react-hook-form** - Form handling and validation
-- **@mui/material** or **antd** - UI component library
+# Install dependencies
+npm install
 
-### Cloud Services
-- **Database**: AWS RDS MySQL or Google Cloud SQL for managed MySQL hosting
-- **File Storage**: AWS S3 or Google Cloud Storage for visit attachments and documents
-- **Email Service**: AWS SES or SendGrid for notifications and password resets
-- **Authentication**: Auth0 or AWS Cognito for enhanced user management (optional, can be built-in)
-- **Hosting**: AWS EC2/ECS or Google App Engine for application deployment
-- **CDN**: CloudFront or Cloudflare for static asset delivery
+# Copy environment configuration
+cp config/.env.example .env
+
+# Start development environment
+docker-compose -f docker/docker-compose.yml up -d
+
+# Start the application
+npm run dev
+```
+
+### Production Deployment
+```bash
+# Run automated deployment
+chmod +x scripts/deploy-ubuntu.sh
+./scripts/deploy-ubuntu.sh
+
+# Test deployment
+./scripts/test-deployment.sh
+```
+
+## 📋 Key Features
+
+- **Multi-Tenant Architecture**: Supports multiple clinics on shared infrastructure with isolated data
+- **User & Role Management**: Hierarchical roles (Owner, Doctor, Staff, Lab Technician) with RBAC
+- **Appointment Management**: Core functionality for scheduling and reducing no-shows
+- **Patient Management**: Comprehensive patient records including demographics and medical history
+- **Clinical Documentation**: Structured records for diagnoses, treatment plans, and visit notes
+- **Laboratory Management**: End-to-end workflow for lab requests and results
+- **Billing & Invoicing**: Tracks charges for consultations, procedures, and lab tests
+- **Reporting & Analytics**: Dashboards for operational and clinical metrics
+- **Audit Logs**: Enhanced tracking for all clinical data access
+
+## 🛡️ Security & Compliance
+
+- **PH Data Privacy Act Compliance**: Healthcare-grade security for PHI data
+- **JWT Authentication**: Stateless token-based authentication
+- **AES-256 Encryption**: For sensitive patient data
+- **Rate Limiting**: Protection against abuse
+- **Input Validation**: Prevention of injection attacks
+- **Audit Logging**: Complete activity tracking
+
+## 📚 Documentation
+
+All documentation is organized in the `docs/` directory:
+
+- **[Product Requirements](docs/prd.md)** - Business requirements and features
+- **[API Endpoints](docs/clinic_saas_api_endpoints.md)** - Complete API specification
+- **[Database Schema](docs/clinic_saas_db_schema.md)** - Data model and relationships
+- **[Development Plan](docs/clinic_saas_development_plan.md)** - Implementation roadmap
+- **[Compliance Guide](docs/clinic_saas_compliance.md)** - Security and regulatory requirements
+- **[Deployment Guide](scripts/DEPLOYMENT.md)** - Production deployment instructions
+
+## 🛠️ Tech Stack
+
+### Backend
+- **Runtime**: Node.js 18+
+- **Framework**: Express.js
+- **Database**: MySQL 8.0
+- **Authentication**: JWT with bcrypt
+- **Validation**: Joi
+- **Security**: Helmet, CORS, Rate Limiting
+
+### Infrastructure
+- **Containerization**: Docker & Docker Compose
+- **Reverse Proxy**: Nginx
+- **Caching**: Redis
+- **Deployment**: Automated scripts for Ubuntu servers
+
+### Development Tools
+- **Testing**: Jest, Supertest
+- **Linting**: ESLint
+- **Process Management**: PM2 (production)
+- **Documentation**: Markdown
+
+## 🔧 Configuration
+
+### Environment Variables
+Copy `config/.env.example` to `.env` and configure:
+
+```bash
+# Database
+DB_HOST=localhost
+DB_PASSWORD=your_secure_password
+
+# Security
+JWT_SECRET=your_jwt_secret_key
+ENCRYPTION_KEY=your_32_char_encryption_key
+
+# Email/SMS (optional)
+SMTP_USER=your_email@gmail.com
+SMS_API_KEY=your_sms_api_key
+```
+
+### Docker Services
+- **clinic-api**: Main application (port 3000)
+- **clinic-db**: MySQL database (port 3306)
+- **clinic-redis**: Redis cache (port 6379)
+- **clinic-nginx**: Reverse proxy (ports 80, 443)
+
+## 📈 Development Phases
+
+1. **Phase 0**: Validation & Setup ✅
+2. **Phase 1**: Core Foundation (Authentication, Multi-tenancy)
+3. **Phase 2**: Clinical Documentation
+4. **Phase 3**: Laboratory Integration
+5. **Phase 4**: Billing & Payments
+6. **Phase 5**: UX Completion & Advanced Features
+
+## 🤝 Contributing
+
+1. Review `docs/task.md` for current phase tasks
+2. Follow the development workflow in `docs/developer-workflow-cheat-sheet.md`
+3. Ensure compliance with `docs/clinic_saas_compliance.md`
+4. Test locally before committing
+
+## 📞 Support
+
+- **Issues**: Create GitHub issues for bugs/features
+- **Discussions**: Use GitHub Discussions for questions
+- **Documentation**: Check `docs/` directory first
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ### Authentication & Security
 - **JWT Authentication**: Stateless token-based auth with access and refresh tokens

@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # Backend API Service
+  clinic-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: clinic-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=clinic-db
+      - DB_PORT=3306
+      - DB_NAME=clinic_saas
+      - DB_USER=clinic_user
+      - DB_PASSWORD=${DB_PASSWORD:-clinic_pass_2024}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-32-char-encryption-key-here}
+    depends_on:
+      clinic-db:
+        condition: service_healthy
+    networks:
+      - clinic-network
+    volumes:
+      - ../logs:/app/logs
+      - ../uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MySQL Database
+  clinic-db:
+    image: mysql:8.0
+    container_name: clinic-db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_pass_2024}
+      - MYSQL_DATABASE=clinic_saas
+      - MYSQL_USER=clinic_user
+      - MYSQL_PASSWORD=${DB_PASSWORD:-clinic_pass_2024}
+    volumes:
+      - clinic_db_data:/var/lib/mysql
+      - ../mysql-init:/docker-entrypoint-initdb.d
+      - ../mysql-config:/etc/mysql/conf.d
+    networks:
+      - clinic-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Nginx Reverse Proxy (Optional - for production)
+  clinic-nginx:
+    image: nginx:alpine
+    container_name: clinic-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../ssl:/etc/nginx/ssl:ro
+      - ../logs/nginx:/var/log/nginx
+    depends_on:
+      - clinic-api
+    networks:
+      - clinic-network
+
+  # Redis for caching (Optional)
+  clinic-redis:
+    image: redis:7-alpine
+    container_name: clinic-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - clinic_redis_data:/data
+      - ../redis/redis.conf:/etc/redis/redis.conf
+    networks:
+      - clinic-network
+    command: redis-server /etc/redis/redis.conf
+
+volumes:
+  clinic_db_data:
+    driver: local
+  clinic_redis_data:
+    driver: local
+
+networks:
+  clinic-network:
+    driver: bridge

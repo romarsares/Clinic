@@ -11,7 +11,7 @@
 - [ ] Confirm pediatric-specific workflows (parent-child profiles, vaccine schedule)  
 - [ ] **Validate clinical workflows (diagnosis entry, treatment plans, lab processes)**
 - [ ] Finalize tech stack: Backend (Java/Node), Frontend (React/Vue), DB (MySQL 8)  
-- [ ] Setup Git repository and CI/CD baseline  
+- [x] Setup Git repository and CI/CD baseline  
 - [ ] Setup multi-tenant DB schema template  
 - [ ] Confirm 3rd-party SMS/Email notification provider  
 - [ ] **Identify compliance requirements for clinical data (PH Data Privacy Act)**
