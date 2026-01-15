@@ -196,7 +196,7 @@ Healthcare Security Threat Model:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 11. Data Retention & Lifecycle Diagram
+### 12. Data Retention & Lifecycle Diagram
 
 **Purpose**: Visual representation of data retention policies and lifecycle management.
 
@@ -254,7 +254,7 @@ Healthcare Data Lifecycle Management:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 12. CI/CD Pipeline Diagram
+### 13. CI/CD Pipeline Diagram
 
 **Purpose**: Development workflow and automated deployment pipeline.
 
@@ -320,7 +320,7 @@ CI/CD Pipeline for Healthcare SaaS:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 13. Business Process Flow Diagram
+### 14. Business Process Flow Diagram
 
 **Purpose**: End-to-end business processes for clinic operations.
 
@@ -368,7 +368,7 @@ Clinic Business Process Flow:
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
-### 14. Disaster Recovery Diagram
+### 15. Disaster Recovery Diagram
 
 **Purpose**: Business continuity and disaster recovery procedures.
 
