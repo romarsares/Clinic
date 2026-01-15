@@ -138,7 +138,7 @@ Copy `config/.env.example` to `.env` and configure:
 ```bash
 # Database
 DB_HOST=localhost
-DB_PASSWORD=your_secure_password
+DB_PASSWORD=N1mbu$12354
 
 # Security
 JWT_SECRET=your_jwt_secret_key

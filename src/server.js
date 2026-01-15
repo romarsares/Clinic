@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const winston = require('winston');
+const { setupProtectedRoutes } = require('./auth');
 require('dotenv').config();
 
 const app = express();
@@ -87,18 +88,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes (placeholder - will be expanded)
-app.get('/api/v1/status', (req, res) => {
-  res.json({
-    message: 'Pediatric Clinic SaaS API is running',
-    version: '1.0.0',
-    endpoints: {
-      health: '/health',
-      status: '/api/v1/status',
-      // Add more endpoints as implemented
-    }
-  });
-});
+// Setup JWT authentication and protected routes
+setupProtectedRoutes(app);
 
 // 404 handler
 app.use('*', (req, res) => {
