@@ -157,12 +157,15 @@ SMS_API_KEY=your_sms_api_key
 
 ## 📈 Development Phases
 
-1. **Phase 0**: Validation & Setup ✅
-2. **Phase 1**: Core Foundation (Authentication, Multi-tenancy)
-3. **Phase 2**: Clinical Documentation
-4. **Phase 3**: Laboratory Integration
-5. **Phase 4**: Billing & Payments
-6. **Phase 5**: UX Completion & Advanced Features
+1.  **Phase 0**: Validation & Setup ✅
+2.  **Phase 1**: Core Foundation (Auth, Tenants, Users, Appointments, Patient Demographics)
+3.  **Phase 2**: Clinical Documentation (Diagnoses, Treatment Plans, Vital Signs)
+4.  **Phase 3**: Laboratory Integration (Lab Requests, Results, Reporting)
+5.  **Phase 4**: Patient History & Reporting (Medical History View, Search, Analytics)
+6.  **Phase 5**: UX Completion & Billing Integration
+7.  **Phase 6**: Hardening (Clinical Data Security, Compliance Validation)
+8.  **Phase 7**: Pre-launch QA (Clinical Workflow Testing)
+9.  **Phase 8**: Launch
 
 ## 🤝 Contributing
 
