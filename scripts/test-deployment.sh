@@ -12,6 +12,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+SERVER_IP="192.168.0.6"
+
 echo -e "${BLUE}=== Pediatric Clinic SaaS Deployment Test ===${NC}"
 
 # Function to check service
@@ -59,9 +61,9 @@ check_container "clinic-redis"
 
 # Test health endpoints
 echo -e "\n${BLUE}=== Health Checks ===${NC}"
-check_service "API Health" "http://localhost:3000/health"
-check_service "API Status" "http://localhost:3000/api/v1/status"
-check_service "Nginx" "http://localhost" 301  # Should redirect to HTTPS
+check_service "API Health" "http://$SERVER_IP:3000/health"
+check_service "API Status" "http://$SERVER_IP:3000/api/v1/status"
+check_service "Nginx" "http://$SERVER_IP" 301  # Should redirect to HTTPS
 
 # Test database connection (if API is running)
 echo -e "\n${BLUE}=== Database Connection ===${NC}"
@@ -76,7 +78,7 @@ fi
 # Test SSL (self-signed)
 echo -e "\n${BLUE}=== SSL Certificate ===${NC}"
 echo -n "Testing HTTPS (self-signed certificate)... "
-if curl -k -s -o /dev/null -w "%{http_code}" "https://localhost" | grep -q "200"; then
+if curl -k -s -o /dev/null -w "%{http_code}" "https://$SERVER_IP" | grep -q "200"; then
     echo -e "${GREEN}✓ PASS (self-signed)${NC}"
 else
     echo -e "${YELLOW}⚠ MANUAL CHECK REQUIRED${NC}"

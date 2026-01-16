@@ -17,6 +17,7 @@ APP_NAME="clinic-saas"
 APP_DIR="/opt/$APP_NAME"
 BACKUP_DIR="/opt/${APP_NAME}_backups"
 LOG_DIR="/var/log/$APP_NAME"
+SERVER_IP="1" # Your local server IP
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Functions
@@ -96,12 +97,12 @@ create_directories() {
     sudo mkdir -p $APP_DIR/redis
     sudo mkdir -p $APP_DIR/ssl
 
-    # Set permissions
+    log_success "Directories created."
+
+    log_info "Setting directory permissions..."
     sudo chown -R $USER:$USER $APP_DIR
     sudo chown -R $USER:$USER $BACKUP_DIR
     sudo chmod -R 755 $LOG_DIR
-
-    log_success "Directories created."
 }
 
 # Clone or update repository
@@ -110,12 +111,12 @@ setup_repository() {
 
     if [ -d "$APP_DIR/.git" ]; then
         log_info "Repository exists, pulling latest changes..."
-        cd $APP_DIR
+        cd "$APP_DIR"
         git pull origin main
     else
         log_info "Cloning repository..."
         git clone https://github.com/your-username/clinic.git $APP_DIR
-        cd $APP_DIR
+        cd "$APP_DIR"
     fi
 
     log_success "Repository setup complete."
@@ -252,14 +253,14 @@ http {
     # HTTP to HTTPS redirect
     server {
         listen 80;
-        server_name localhost;
+        server_name $SERVER_IP;
         return 301 https://\$server_name\$request_uri;
     }
 
     # HTTPS server
     server {
         listen 443 ssl http2;
-        server_name localhost;
+        server_name $SERVER_IP;
 
         # SSL configuration (you'll need to add real certificates)
         ssl_certificate /etc/nginx/ssl/selfsigned.crt;
@@ -322,7 +323,7 @@ create_ssl_certificates() {
     sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout $APP_DIR/ssl/selfsigned.key \
         -out $APP_DIR/ssl/selfsigned.crt \
-        -subj "/C=PH/ST=Metro Manila/L=Manila/O=Clinic SaaS/CN=localhost"
+        -subj "/C=PH/ST=Metro Manila/L=Manila/O=Clinic SaaS/CN=$SERVER_IP"
 
     sudo chmod 600 $APP_DIR/ssl/selfsigned.key
     sudo chmod 644 $APP_DIR/ssl/selfsigned.crt
@@ -384,8 +385,8 @@ main() {
     log_info "Timestamp: $TIMESTAMP"
 
     check_permissions
-    install_dependencies
     create_directories
+    install_dependencies
     setup_repository
     create_env_file
     setup_mysql_config
@@ -397,8 +398,8 @@ main() {
     log_success "Deployment completed successfully!"
     log_info ""
     log_info "Application should be available at:"
-    log_info "  - API: http://localhost:3000"
-    log_info "  - Web: https://localhost (with self-signed certificate)"
+    log_info "  - API: http://$SERVER_IP:3000"
+    log_info "  - Web: https://$SERVER_IP (with self-signed certificate)"
     log_info ""
     log_warning "Remember to:"
     log_warning "  1. Update .env file with secure passwords"
