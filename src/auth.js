@@ -8,8 +8,8 @@ const winston = require('winston');
 // CONFIGURATION
 // ==========================================
 const JWT_CONFIG = {
-  secret: process.env.JWT_SECRET || 'your-super-secure-jwt-secret-key-minimum-32-characters-long',
-  accessExpires: process.env.JWT_ACCESS_EXPIRES || '15m',
+  secret: process.env.JWT_SECRET || 'dev_clinic_saas_2024_secure_jwt_key_a8f9b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
+  accessExpires: process.env.JWT_EXPIRES_IN || '24h',
   refreshExpires: process.env.JWT_REFRESH_EXPIRES || '7d'
 };
 
@@ -324,17 +324,23 @@ function createAuthRoutes(app) {
 
   // POST /api/auth/refresh
   app.post('/api/auth/refresh', (req, res) => {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-      return res.status(400).json({ error: 'Refresh token required' });
-    }
-
     try {
+      const { refreshToken } = req.body;
+
+      if (!refreshToken) {
+        return res.status(400).json({ 
+          error: 'Validation error',
+          message: 'Refresh token required' 
+        });
+      }
+
       const decoded = jwt.verify(refreshToken, JWT_CONFIG.secret);
 
       if (decoded.type !== 'refresh') {
-        return res.status(403).json({ error: 'Invalid refresh token' });
+        return res.status(403).json({ 
+          error: 'Invalid token type',
+          message: 'Invalid refresh token' 
+        });
       }
 
       // In real app: validate refresh token against database
@@ -352,15 +358,34 @@ function createAuthRoutes(app) {
       });
 
     } catch (error) {
-      res.status(403).json({ error: 'Invalid refresh token' });
+      winston.error('Token refresh error', { 
+        error: error.message,
+        userId: req.body?.refreshToken ? 'present' : 'missing'
+      });
+      
+      res.status(403).json({ 
+        error: 'Token verification failed',
+        message: 'Invalid or expired refresh token' 
+      });
     }
   });
 
   // POST /api/auth/logout
   app.post('/api/auth/logout', authenticateToken, (req, res) => {
-    // In real app: add token to blacklist
-    winston.info('User logged out', { userId: req.user.id });
-    res.json({ success: true, message: 'Logged out successfully' });
+    try {
+      // In real app: add token to blacklist
+      winston.info('User logged out', { userId: req.user.id });
+      res.json({ success: true, message: 'Logged out successfully' });
+    } catch (error) {
+      winston.error('Logout error', { 
+        error: error.message, 
+        userId: req.user?.id 
+      });
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Logout failed'
+      });
+    }
   });
 
   // GET /api/auth/me - Get current user info
@@ -370,6 +395,18 @@ function createAuthRoutes(app) {
       user: req.user
     });
   });
+}
+
+/**
+ * Validate request origin for CSRF protection
+ */
+function isValidOrigin(origin) {
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://yourdomain.com'
+  ];
+  return allowedOrigins.includes(origin);
 }
 
 // ==========================================
@@ -397,6 +434,17 @@ function setupProtectedRoutes(app) {
     requirePermission('read_patients'),
     requireClinicAccess,
     (req, res) => {
+      // Verify request origin for CSRF protection
+      const origin = req.get('Origin');
+      const referer = req.get('Referer');
+      
+      if (origin && !isValidOrigin(origin)) {
+        return res.status(403).json({
+          error: 'Invalid origin',
+          message: 'Request from unauthorized origin'
+        });
+      }
+      
       res.json({
         success: true,
         message: 'Patients list',
@@ -411,6 +459,16 @@ function setupProtectedRoutes(app) {
     requirePermission('write_patients'),
     requireClinicAccess,
     (req, res) => {
+      // Verify request origin for CSRF protection
+      const origin = req.get('Origin');
+      
+      if (!origin || !isValidOrigin(origin)) {
+        return res.status(403).json({
+          error: 'Invalid origin',
+          message: 'Request from unauthorized origin'
+        });
+      }
+      
       res.json({
         success: true,
         message: 'Patient created',

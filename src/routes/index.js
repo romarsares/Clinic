@@ -16,6 +16,7 @@
 
 const express = require('express');
 const visitRoutes = require('./visits');
+const authRoutes = require('./authRoutes');
 const { logFailedAccess } = require('../middleware/audit');
 
 const router = express.Router();
@@ -39,40 +40,16 @@ router.get('/health', (req, res) => {
 });
 
 /**
+ * Authentication Routes
+ * Handles user login, registration, and JWT token management
+ */
+router.use(`${API_VERSION}/auth`, authRoutes);
+
+/**
  * Clinical Documentation Routes
  * Handles visit records, diagnoses, vital signs, treatment plans
  */
 router.use(`${API_VERSION}/visits`, visitRoutes);
-
-/**
- * Authentication Routes (placeholder for future implementation)
- */
-// router.use(`${API_VERSION}/auth`, authRoutes);
-
-/**
- * Patient Management Routes (placeholder for future implementation)
- */
-// router.use(`${API_VERSION}/patients`, patientRoutes);
-
-/**
- * Appointment Routes (placeholder for future implementation)
- */
-// router.use(`${API_VERSION}/appointments`, appointmentRoutes);
-
-/**
- * Laboratory Routes (placeholder for Phase 3)
- */
-// router.use(`${API_VERSION}/lab`, labRoutes);
-
-/**
- * Billing Routes (placeholder for future implementation)
- */
-// router.use(`${API_VERSION}/billing`, billingRoutes);
-
-/**
- * Admin Routes (placeholder for future implementation)
- */
-// router.use(`${API_VERSION}/admin`, adminRoutes);
 
 /**
  * API Documentation endpoint
@@ -83,6 +60,10 @@ router.get(`${API_VERSION}/docs`, (req, res) => {
     version: '1.0.0',
     description: 'Multi-tenant clinic management system with clinical documentation',
     endpoints: {
+      auth: {
+        'POST /auth/login': 'User login',
+        'POST /auth/register': 'User registration'
+      },
       visits: {
         'POST /visits': 'Create new visit',
         'GET /visits/:id': 'Get visit details',

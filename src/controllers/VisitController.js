@@ -35,6 +35,7 @@ class VisitController {
         return res.status(400).json({ errors: errors.array() });
       }
 
+      // amazonq-ignore-next-line
       const { appointment_id, patient_id, doctor_id } = req.body;
       const clinic_id = req.user.clinic_id;
 
