@@ -4,7 +4,8 @@ const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const winston = require('winston');
-const { setupProtectedRoutes } = require('./auth');
+const routes = require('./routes');
+const db = require('./config/database');
 require('dotenv').config();
 
 const app = express();
@@ -88,8 +89,26 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Setup JWT authentication and protected routes
-setupProtectedRoutes(app);
+// Test database connection on startup
+db.testConnection();
+
+// Register API routes
+app.use('/', routes);
+
+// Database health check endpoint
+app.get('/db-health', async (req, res) => {
+  const isHealthy = await db.healthCheck();
+  const stats = await db.getStats();
+  
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'healthy' : 'unhealthy',
+    database: {
+      connected: isHealthy,
+      stats: stats
+    },
+    timestamp: new Date().toISOString()
+  });
+});
 
 // 404 handler
 app.use('*', (req, res) => {

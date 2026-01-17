@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest",
+    "test": "NODE_ENV=test jest",
+    "test:watch": "NODE_ENV=test jest --watch",
+    "test:coverage": "NODE_ENV=test jest --coverage",
+    "test:verbose": "NODE_ENV=test jest --verbose",
     "lint": "eslint src/**/*.js",
     "build": "npm run lint && npm test",
     "healthcheck": "node tests/healthcheck.js"
@@ -41,7 +44,8 @@
     "supertest": "^6.3.3",
     "eslint": "^8.56.0",
     "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-node": "^11.1.0"
+    "eslint-plugin-node": "^11.1.0",
+    "@types/jest": "^29.5.8"
   },
   "engines": {
     "node": ">=18.0.0",
