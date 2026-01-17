@@ -120,13 +120,19 @@ const requireRole = (allowedRoles) => {
  * Require specific permissions for access
  */
 const requirePermission = (requiredPermissions) => {
-  return async (req, res, next) => {
+  return async (req, res, next) => { // Ensure requiredPermissions is an array
+    const permissionsToCheck = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
     try {
       if (!req.user) {
         return res.status(401).json({
           success: false,
           message: 'Authentication required'
         });
+      }
+
+      // Owner role has all permissions
+      if (req.user.roles.includes('Owner')) {
+        return next();
       }
 
       // Get user permissions through roles
@@ -142,14 +148,14 @@ const requirePermission = (requiredPermissions) => {
       const [permissions] = await db.execute(permissionQuery, [req.user.id, req.user.clinic_id]);
       const userPermissions = permissions.map(p => p.name);
 
-      const hasRequiredPermission = requiredPermissions.some(permission => 
+      const hasRequiredPermission = permissionsToCheck.some(permission =>
         userPermissions.includes(permission)
       );
 
       if (!hasRequiredPermission) {
         return res.status(403).json({
           success: false,
-          message: `Access denied. Required permissions: ${requiredPermissions.join(', ')}`
+          message: `Access denied. Required permissions: ${permissionsToCheck.join(', ')}`
         });
       }
 
