@@ -9,7 +9,7 @@
 
 - [ ] Interview 3–5 small clinics to confirm operational AND clinical pain points  
 - [ ] Confirm pediatric-specific workflows (parent-child profiles, vaccine schedule)  
-- [ ] **Validate clinical workflows (diagnosis entry, treatment plans, lab processes)**
+- [x] **Validate clinical workflows (diagnosis entry, treatment plans, lab processes)**
 - [x] Finalize tech stack: Backend (Java/Node), Frontend (React/Vue), DB (MySQL 8)  
 - [x] Setup Git repository and CI/CD baseline  
 - [ ] Setup multi-tenant DB schema template  
@@ -24,7 +24,7 @@
 ## Phase 1: Core Foundation
 **Goal:** Build the foundational modules that every clinic needs.
 
-- [x] Implement **Authentication & RBAC** (Owner, Doctor, Staff, Admin, Parent, Lab Technician)  
+- [ ] Implement **Authentication & RBAC** (Owner, Doctor, Staff, Admin, Parent, Lab Technician)  
 - [ ] Implement **Tenant / Clinic Management**  
 - [ ] Implement **User Management** per tenant  
 - [ ] Implement **Parent → Child relationship** (immutable DOB)  
@@ -135,7 +135,7 @@
   - [ ] Lab results history
   - [ ] Medication history
   - [ ] Growth charts (for pediatric patients)
-  - [ ] Vaccine records (for pediatric patients)
+  - [ ] **Vaccine Records Management (view/add administered vaccines)**
 - [ ] **Search and Filter Capabilities:**
   - [ ] Search by diagnosis
   - [ ] Filter by date range
