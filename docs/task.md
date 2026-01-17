@@ -8,14 +8,14 @@
 **Goal:** Ensure requirements are realistic, tech stack is ready, and workflows are validated.
 
 - [ ] Interview 3–5 small clinics to confirm operational AND clinical pain points  
-- [ ] Confirm pediatric-specific workflows (parent-child profiles, vaccine schedule)  
-- [x] **Validate clinical workflows (diagnosis entry, treatment plans, lab processes)**
+- [x] Confirm pediatric-specific workflows (parent-child profiles, vaccine schedule)  
+- [x] **Confirm pediatric-specific workflows (parent-child profiles, vaccine schedule)**
 - [x] Finalize tech stack: Backend (Java/Node), Frontend (React/Vue), DB (MySQL 8)  
 - [x] Setup Git repository and CI/CD baseline  
-- [ ] Setup multi-tenant DB schema template  
-- [ ] Confirm 3rd-party SMS/Email notification provider  
-- [ ] **Identify compliance requirements for clinical data (PH Data Privacy Act)**
-- [ ] Create initial project documentation skeleton (`prd.md`, `claude.md`, `risks.md`)  
+- [x] Setup multi-tenant DB schema template  
+- [x] Confirm 3rd-party SMS/Email notification provider  
+- [x] **Identify compliance requirements for clinical data (PH Data Privacy Act)**
+- [x] Create initial project documentation skeleton (`prd.md`, `claude.md`, `risks.md`)  
 
 **Exit Criteria:** Tech stack validated, clinical workflows confirmed, compliance requirements documented, project structure ready  
 
