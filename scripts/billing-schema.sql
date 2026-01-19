@@ -10,7 +10,6 @@ CREATE TABLE service_types (
     base_price DECIMAL(10,2) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinic_id) REFERENCES clinics(id) ON DELETE CASCADE,
     INDEX idx_clinic_category (clinic_id, category)
 );
 
@@ -28,9 +27,6 @@ CREATE TABLE patient_bills (
     due_date DATE NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (clinic_id) REFERENCES clinics(id) ON DELETE CASCADE,
-    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
-    FOREIGN KEY (visit_id) REFERENCES visits(id) ON DELETE SET NULL,
     UNIQUE KEY unique_bill_number (clinic_id, bill_number),
     INDEX idx_patient_status (patient_id, status),
     INDEX idx_clinic_date (clinic_id, bill_date)
@@ -48,8 +44,6 @@ CREATE TABLE bill_items (
     lab_request_id INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (bill_id) REFERENCES patient_bills(id) ON DELETE CASCADE,
-    FOREIGN KEY (service_type_id) REFERENCES service_types(id) ON DELETE RESTRICT,
-    FOREIGN KEY (lab_request_id) REFERENCES lab_requests(id) ON DELETE SET NULL,
     INDEX idx_bill_service (bill_id, service_type_id)
 );
 
