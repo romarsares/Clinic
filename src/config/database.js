@@ -20,7 +20,7 @@ const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_PASSWORD || 'N1mbu$12354',
   database: process.env.DB_NAME || 'clinic_saas',
   waitForConnections: true,
   connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
@@ -54,14 +54,14 @@ const testConnection = async () => {
 const executeQuery = async (query, params = []) => {
   try {
     const [rows, fields] = await pool.execute(query, params);
-    
+
     // Log queries in development
     if (process.env.NODE_ENV === 'development' && process.env.LOG_QUERIES === 'true') {
       console.log('🔍 Query:', query);
       console.log('📝 Params:', params);
       console.log('📊 Rows affected:', Array.isArray(rows) ? rows.length : rows.affectedRows);
     }
-    
+
     return [rows, fields];
   } catch (error) {
     console.error('❌ Database query error:', error.message);
@@ -84,7 +84,7 @@ const getConnection = async () => {
 // Transaction helper
 const transaction = async (callback) => {
   const connection = await getConnection();
-  
+
   try {
     await connection.beginTransaction();
     const result = await callback(connection);
@@ -114,7 +114,7 @@ const getStats = async () => {
   try {
     const [connections] = await pool.execute('SHOW STATUS LIKE "Threads_connected"');
     const [maxConnections] = await pool.execute('SHOW VARIABLES LIKE "max_connections"');
-    
+
     return {
       activeConnections: parseInt(connections[0].Value),
       maxConnections: parseInt(maxConnections[0].Value),
@@ -147,7 +147,7 @@ process.on('SIGTERM', closePool);
 module.exports = {
   // Main pool for direct use
   ...pool,
-  
+
   // Helper functions
   testConnection,
   executeQuery,
@@ -156,7 +156,7 @@ module.exports = {
   healthCheck,
   getStats,
   closePool,
-  
+
   // Configuration
   config: dbConfig
 };
