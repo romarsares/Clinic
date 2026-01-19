@@ -17,6 +17,7 @@
 const express = require('express');
 const visitRoutes = require('./visits');
 const authRoutes = require('./authRoutes');
+const clinicRoutes = require('./clinicRoutes');
 const { logFailedAccess } = require('../middleware/audit');
 
 const router = express.Router();
@@ -50,6 +51,12 @@ router.use(`${API_VERSION}/auth`, authRoutes);
  * Handles visit records, diagnoses, vital signs, treatment plans
  */
 router.use(`${API_VERSION}/visits`, visitRoutes);
+
+/**
+ * Clinic Management Routes
+ * Handles clinic profile and settings
+ */
+router.use(`${API_VERSION}/clinics`, clinicRoutes);
 
 /**
  * API Documentation endpoint

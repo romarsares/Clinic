@@ -6,7 +6,8 @@ const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 const routes = require('./routes');
 const db = require('./config/database');
-require('dotenv').config();
+const envPath = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+require('dotenv').config({ path: envPath });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -99,7 +100,7 @@ app.use('/', routes);
 app.get('/db-health', async (req, res) => {
   const isHealthy = await db.healthCheck();
   const stats = await db.getStats();
-  
+
   res.status(isHealthy ? 200 : 503).json({
     status: isHealthy ? 'healthy' : 'unhealthy',
     database: {
@@ -140,11 +141,13 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-// Start server
-app.listen(PORT, () => {
-  logger.info(`Pediatric Clinic SaaS API server running on port ${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`Health check available at: http://localhost:${PORT}/health`);
-});
+// Start server if not in a test environment
+if (require.main === module) {
+  app.listen(PORT, () => {
+    logger.info(`Pediatric Clinic SaaS API server running on port ${PORT}`);
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`Health check available at: http://localhost:${PORT}/health`);
+  });
+}
 
 module.exports = app;

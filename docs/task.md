@@ -24,7 +24,7 @@
 ## Phase 1: Core Foundation
 **Goal:** Build the foundational modules that every clinic needs.
 
-- [ ] Implement **Authentication & RBAC** (Owner, Doctor, Staff, Admin, Parent, Lab Technician)  
+- [x] Implement **Authentication & RBAC** (Owner, Doctor, Staff, Admin, Parent, Lab Technician)  
 - [ ] Implement **Tenant / Clinic Management**  
 - [ ] Implement **User Management** per tenant  
 - [ ] Implement **Parent → Child relationship** (immutable DOB)  

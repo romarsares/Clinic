@@ -228,7 +228,7 @@ DB_NAME=clinic_saas
 DB_CONNECTION_LIMIT=10
 
 # JWT Configuration
-JWT_SECRET=your_super_secret_jwt_key_for_development_only
+JWT_SECRET=dev_clinic_saas_2024_secure_jwt_key_a8f9b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6
 JWT_EXPIRES_IN=24h
 
 # Server Configuration

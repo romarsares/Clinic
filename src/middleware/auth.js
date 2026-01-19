@@ -32,7 +32,7 @@ const authenticateToken = async (req, res, next) => {
 
     // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Get user details with roles
     const userQuery = `
       SELECT u.id, u.clinic_id, u.email, u.full_name, u.status,
@@ -45,7 +45,7 @@ const authenticateToken = async (req, res, next) => {
     `;
 
     const [users] = await db.execute(userQuery, [decoded.userId]);
-    
+
     if (!users.length) {
       return res.status(401).json({
         success: false,
@@ -54,7 +54,12 @@ const authenticateToken = async (req, res, next) => {
     }
 
     const user = users[0];
-    
+
+    // Debug log for RBAC troubleshooting
+    if (process.env.NODE_ENV === 'test') {
+      console.log(`[AUTH DEBUG] User: ${user.email}, Clinic: ${user.clinic_id}, Roles: ${user.roles}`);
+    }
+
     // Add user context to request
     req.user = {
       id: user.id,
@@ -68,14 +73,14 @@ const authenticateToken = async (req, res, next) => {
 
   } catch (error) {
     console.error('Authentication error:', error);
-    
+
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
         success: false,
         message: 'Invalid token'
       });
     }
-    
+
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
@@ -214,7 +219,7 @@ const clinicRateLimit = (windowMs = 15 * 60 * 1000, maxRequests = 1000) => {
 
     // Check current requests
     const currentRequests = requests.get(clinicId) || [];
-    
+
     if (currentRequests.length >= maxRequests) {
       return res.status(429).json({
         success: false,

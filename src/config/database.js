@@ -25,8 +25,8 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
   queueLimit: 0,
-  acquireTimeout: 60000,
-  timeout: 60000,
+  acquireTimeout: 5000,
+  timeout: 5000,
   reconnect: true,
   charset: 'utf8mb4',
   timezone: '+00:00'
@@ -146,7 +146,9 @@ process.on('SIGTERM', closePool);
 // Export pool and helper functions
 module.exports = {
   // Main pool for direct use
-  ...pool,
+  pool,
+  execute: (query, params) => pool.execute(query, params),
+  query: (query, params) => pool.query(query, params),
 
   // Helper functions
   testConnection,

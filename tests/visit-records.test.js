@@ -16,17 +16,30 @@
 const request = require('supertest');
 const app = require('../src/server');
 const db = require('../src/config/database');
+const jwt = require('jsonwebtoken');
 
 describe('Visit Records Module - Phase 2 Step 1', () => {
   let doctorToken, staffToken, visitId;
-  
+  const JWT_SECRET = 'test_jwt_secret_key_for_testing_only_do_not_use_in_production';
+
   beforeAll(async () => {
     // Setup test database connection
     await db.testConnection();
-    
-    // Mock JWT tokens for testing (replace with actual token generation)
-    doctorToken = 'mock_doctor_jwt_token';
-    staffToken = 'mock_staff_jwt_token';
+
+    // Create actual JWT tokens for testing
+    doctorToken = jwt.sign({ userId: 902, clinicId: 999, roles: ['Doctor'] }, JWT_SECRET);
+    staffToken = jwt.sign({ userId: 903, clinicId: 999, roles: ['Staff'] }, JWT_SECRET);
+
+    // Insert test data needed for foreign keys
+    await db.executeQuery(`INSERT IGNORE INTO clinics (id, name, email) VALUES (999, 'Test Clinic 2', 'test2@clinic.com')`);
+    await db.executeQuery(`INSERT IGNORE INTO auth_users (id, clinic_id, email, password_hash, full_name, status) VALUES 
+      (902, 999, 'dr@test.com', 'hash', 'Test Doctor', 'active'),
+      (903, 999, 'st@test.com', 'hash', 'Test Staff', 'active')`);
+
+    // Also need roles and user_roles for the middleware's select query
+    await db.executeQuery(`INSERT IGNORE INTO roles (id, clinic_id, name) VALUES (10, 999, 'Doctor'), (11, 999, 'Staff')`);
+    await db.executeQuery(`INSERT IGNORE INTO user_roles (user_id, role_id) SELECT 902, id FROM roles WHERE clinic_id = 999 AND name = 'Doctor'`);
+    await db.executeQuery(`INSERT IGNORE INTO user_roles (user_id, role_id) SELECT 903, id FROM roles WHERE clinic_id = 999 AND name = 'Staff'`);
   });
 
   afterAll(async () => {
@@ -339,11 +352,15 @@ function createMockToken(userId, clinicId, roles) {
 async function cleanupTestData() {
   try {
     // Clean up test visits, diagnoses, vital signs, etc.
-    await db.execute('DELETE FROM visit_vital_signs WHERE visit_id IN (SELECT id FROM visits WHERE patient_id = 999)');
-    await db.execute('DELETE FROM visit_diagnoses WHERE visit_id IN (SELECT id FROM visits WHERE patient_id = 999)');
-    await db.execute('DELETE FROM visit_notes WHERE visit_id IN (SELECT id FROM visits WHERE patient_id = 999)');
-    await db.execute('DELETE FROM visits WHERE patient_id = 999');
+    await db.execute('DELETE FROM visit_vital_signs WHERE visit_id IN (SELECT id FROM visits WHERE patient_id = 999 OR clinic_id = 999)');
+    await db.execute('DELETE FROM visit_diagnoses WHERE visit_id IN (SELECT id FROM visits WHERE patient_id = 999 OR clinic_id = 999)');
+    await db.execute('DELETE FROM visit_notes WHERE visit_id IN (SELECT id FROM visits WHERE patient_id = 999 OR clinic_id = 999)');
+    await db.execute('DELETE FROM visits WHERE patient_id = 999 OR clinic_id = 999');
     await db.execute('DELETE FROM audit_logs WHERE clinic_id = 999');
+    await db.execute('DELETE FROM user_roles WHERE user_id IN (902, 903)');
+    await db.execute('DELETE FROM auth_users WHERE id IN (902, 903)');
+    await db.execute('DELETE FROM roles WHERE clinic_id = 999');
+    await db.execute('DELETE FROM clinics WHERE id = 999');
   } catch (error) {
     console.error('Test cleanup error:', error);
   }
