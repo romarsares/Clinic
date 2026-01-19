@@ -264,10 +264,10 @@ const logFailedAccessAttempt = async (req, statusCode) => {
     `;
 
     await db.execute(query, [
-      req.ip || req.connection.remoteAddress,
-      req.get('User-Agent'),
-      req.originalUrl,
-      req.method,
+      req.ip || req.connection.remoteAddress || null,
+      req.get('User-Agent') || null,
+      req.originalUrl || null,
+      req.method || null,
       statusCode
     ]);
 
