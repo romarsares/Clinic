@@ -1,5 +1,6 @@
 const LabRequest = require('../models/LabRequest');
 const LabResult = require('../models/LabResult');
+const Billing = require('../models/Billing');
 const AuditService = require('../services/AuditService');
 const Joi = require('joi');
 
@@ -152,6 +153,25 @@ class LabController {
         normal_ranges: normalRanges,
         abnormal_flags: abnormalFlags
       });
+
+      // Auto-add lab charges to bill if visit exists
+      try {
+        const labRequest = await LabRequest.findById(req.user.tenant_id, value.lab_request_id);
+        if (labRequest && labRequest.visit_id) {
+          // Find existing bill for the visit
+          const [existingBill] = await require('../config/database').execute(
+            'SELECT id FROM patient_bills WHERE visit_id = ? AND clinic_id = ?',
+            [labRequest.visit_id, req.user.tenant_id]
+          );
+          
+          if (existingBill.length > 0) {
+            await Billing.addLabCharges(existingBill[0].id, value.lab_request_id);
+          }
+        }
+      } catch (billingError) {
+        console.error('Error adding lab charges to bill:', billingError);
+        // Don't fail result creation if billing fails
+      }
 
       await AuditService.log(req.user.tenant_id, {
         user_id: req.user.id,

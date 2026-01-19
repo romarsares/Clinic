@@ -26,6 +26,7 @@ const auditRoutes = require('./auditRoutes');
 const medicalHistoryRoutes = require('./medicalHistoryRoutes');
 const labRoutes = require('./labRoutes');
 const patientHistoryRoutes = require('./patientHistoryRoutes');
+const billingRoutes = require('./billingRoutes');
 const { logFailedAccess } = require('../middleware/audit');
 const { enforceTenantIsolation } = require('../middleware/tenant');
 
@@ -96,6 +97,12 @@ router.use(`${API_VERSION}/lab`, labRoutes);
  * Handles medical history, search, reports, and pediatric features
  */
 router.use(`${API_VERSION}/patient-history`, patientHistoryRoutes);
+
+/**
+ * Billing Routes
+ * Handles billing operations and revenue tracking
+ */
+router.use(`${API_VERSION}/billing`, enforceTenantIsolation, billingRoutes);
 
 /**
  * Clinic Management Routes

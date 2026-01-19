@@ -17,6 +17,7 @@
 
 const { body, param, validationResult } = require('express-validator');
 const Visit = require('../models/Visit');
+const Billing = require('../models/Billing');
 const db = require('../config/database');
 
 class VisitController {
@@ -340,11 +341,38 @@ class VisitController {
       const clinic_id = req.user.clinic_id;
       const doctor_id = req.user.id;
 
+      // Get visit details for billing
+      const visit = await this.visitModel.getClinicalSummary(id, clinic_id);
+      if (!visit) {
+        return res.status(404).json({
+          success: false,
+          message: 'Visit not found'
+        });
+      }
+
       await this.visitModel.closeVisit(id, clinic_id, doctor_id);
+
+      // Auto-create bill for visit
+      try {
+        const billId = await Billing.createBillForVisit(id, clinic_id, visit.patient_id);
+        
+        // Add consultation charge (default to pediatric consultation)
+        const [consultationType] = await db.execute(
+          'SELECT id FROM service_types WHERE clinic_id = ? AND category = "consultation" LIMIT 1',
+          [clinic_id]
+        );
+        
+        if (consultationType.length > 0) {
+          await Billing.addConsultationCharge(billId, consultationType[0].id, 'Visit Consultation');
+        }
+      } catch (billingError) {
+        console.error('Error creating bill:', billingError);
+        // Don't fail visit closure if billing fails
+      }
 
       res.json({
         success: true,
-        message: 'Visit closed successfully'
+        message: 'Visit closed successfully and bill created'
       });
 
     } catch (error) {
