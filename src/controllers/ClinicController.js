@@ -16,6 +16,33 @@ class ClinicController {
     }
 
     /**
+     * Create new clinic
+     * POST /api/v1/clinics
+     */
+    async createClinic(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ success: false, errors: errors.array() });
+            }
+
+            const clinic = await this.clinicModel.create(req.body);
+            res.status(201).json({
+                success: true,
+                message: 'Clinic created successfully',
+                data: clinic
+            });
+        } catch (error) {
+            console.error('Error creating clinic:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to create clinic',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            });
+        }
+    }
+
+    /**
      * Get clinic details
      * GET /api/v1/clinics/:id
      */
@@ -24,7 +51,7 @@ class ClinicController {
             const { id } = req.params;
 
             // Multi-tenant check: User can only access their own clinic unless they are a Super Admin
-            if (req.user.clinic_id !== parseInt(id) && !req.user.roles.includes('SuperAdmin')) {
+            if (req.user && req.user.clinic_id !== parseInt(id) && !req.user.roles.includes('SuperAdmin')) {
                 return res.status(403).json({
                     success: false,
                     message: 'Access denied. You can only access your own clinic details.'
@@ -92,6 +119,36 @@ class ClinicController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to update clinic',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Deactivate clinic
+     * DELETE /api/v1/clinics/:id
+     */
+    async deactivateClinic(req, res) {
+        try {
+            const { id } = req.params;
+
+            if (!req.user.roles.includes('SuperAdmin')) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied. SuperAdmin only.'
+                });
+            }
+
+            await this.clinicModel.deactivate(id);
+            res.json({
+                success: true,
+                message: 'Clinic deactivated successfully'
+            });
+        } catch (error) {
+            console.error('Error deactivating clinic:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to deactivate clinic',
                 error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
             });
         }
@@ -198,6 +255,49 @@ class ClinicController {
                 error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
             });
         }
+    }
+
+    /**
+     * Get clinic statistics
+     * GET /api/v1/clinics/:id/stats
+     */
+    async getStats(req, res) {
+        try {
+            const { id } = req.params;
+
+            if (req.user.clinic_id !== parseInt(id) && !req.user.roles.includes('SuperAdmin')) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied.'
+                });
+            }
+
+            const stats = await this.clinicModel.getStats(id);
+            res.json({
+                success: true,
+                data: stats
+            });
+        } catch (error) {
+            console.error('Error fetching clinic stats:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch clinic stats',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Validation rules for clinic creation
+     */
+    static getCreateValidation() {
+        return [
+            body('name').notEmpty().trim().withMessage('Clinic name is required'),
+            body('email').isEmail().withMessage('Valid email is required'),
+            body('contact_number').optional().trim(),
+            body('address').optional().trim(),
+            body('timezone').optional().trim().default('Asia/Manila')
+        ];
     }
 
     /**

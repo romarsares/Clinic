@@ -14,7 +14,18 @@ const { auditLog } = require('../middleware/audit');
 const router = express.Router();
 const clinicController = new ClinicController();
 
-// Apply authentication middleware to all routes
+/**
+ * @route   POST /api/v1/clinics
+ * @desc    Create new clinic (SuperAdmin only)
+ * @access  Private (SuperAdmin)
+ */
+router.post('/',
+    ClinicController.getCreateValidation(),
+    auditLog('clinic', 'create'),
+    (req, res) => clinicController.createClinic(req, res)
+);
+
+// Apply authentication middleware to all other routes
 router.use(authenticateToken);
 
 /**
@@ -52,6 +63,17 @@ router.put('/:id',
 );
 
 /**
+ * @route   DELETE /api/v1/clinics/:id
+ * @desc    Deactivate clinic (SuperAdmin only)
+ * @access  Private (SuperAdmin)
+ */
+router.delete('/:id',
+    requireRole(['SuperAdmin']),
+    auditLog('clinic', 'deactivate'),
+    (req, res) => clinicController.deactivateClinic(req, res)
+);
+
+/**
  * @route   GET /api/v1/clinics/:id/settings
  * @desc    Get clinic settings
  * @access  Private (Owner, Admin, SuperAdmin)
@@ -72,6 +94,17 @@ router.post('/:id/settings',
     ClinicController.getSettingValidation(),
     auditLog('clinic_settings', 'create'),
     (req, res) => clinicController.updateSetting(req, res)
+);
+
+/**
+ * @route   GET /api/v1/clinics/:id/stats
+ * @desc    Get clinic statistics
+ * @access  Private (Owner, Admin, SuperAdmin)
+ */
+router.get('/:id/stats',
+    requireRole(['Owner', 'Admin', 'SuperAdmin']),
+    auditLog('clinic_stats', 'view'),
+    (req, res) => clinicController.getStats(req, res)
 );
 
 module.exports = router;

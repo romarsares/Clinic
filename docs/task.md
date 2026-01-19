@@ -25,7 +25,7 @@
 **Goal:** Build the foundational modules that every clinic needs.
 
 - [x] Implement **Authentication & RBAC** (Owner, Doctor, Staff, Admin, Parent, Lab Technician)  
-- [ ] Implement **Tenant / Clinic Management**  
+- [x] Implement **Tenant / Clinic Management**  
 - [ ] Implement **User Management** per tenant  
 - [ ] Implement **Parent → Child relationship** (immutable DOB)  
 - [ ] Implement **Appointment Management** (basic create, update, cancel)  
