@@ -10,6 +10,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
+const AuditService = require('../services/AuditService');
 
 class AuthController {
   /**
@@ -39,6 +40,7 @@ class AuthController {
       const [users] = await db.execute(userQuery, [email]);
       
       if (!users.length) {
+        await AuditService.logAuth({ email }, 'login_failed', req, false, 'User not found');
         return res.status(401).json({
           success: false,
           message: 'Invalid credentials'
@@ -50,6 +52,7 @@ class AuthController {
       // Verify password
       const isValidPassword = await bcrypt.compare(password, user.password_hash);
       if (!isValidPassword) {
+        await AuditService.logAuth({ email, clinic_id: user.clinic_id }, 'login_failed', req, false, 'Invalid password');
         return res.status(401).json({
           success: false,
           message: 'Invalid credentials'
@@ -72,6 +75,9 @@ class AuthController {
         'UPDATE auth_users SET last_login_at = NOW() WHERE id = ?',
         [user.id]
       );
+
+      // Log successful login
+      await AuditService.logAuth(user, 'login', req, true);
 
       res.json({
         success: true,
@@ -132,6 +138,20 @@ class AuthController {
         INSERT INTO auth_users (clinic_id, email, password_hash, full_name, status, created_at, updated_at)
         VALUES (?, ?, ?, ?, 'active', NOW(), NOW())
       `, [clinic_id, email, password_hash, full_name]);
+
+      // Log user registration
+      await AuditService.logAction({
+        clinic_id,
+        user_id: result.insertId,
+        action: 'user_register',
+        entity: 'user',
+        entity_id: result.insertId,
+        ip_address: req.ip || req.connection?.remoteAddress,
+        user_agent: req.get('User-Agent'),
+        method: req.method,
+        url: req.originalUrl,
+        new_value: { email, full_name, clinic_id }
+      });
 
       res.status(201).json({
         success: true,

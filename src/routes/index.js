@@ -22,6 +22,7 @@ const userRoutes = require('./userRoutes');
 const patientRoutes = require('./patientRoutes');
 const appointmentRoutes = require('./appointmentRoutes');
 const tenantRoutes = require('./tenantRoutes');
+const auditRoutes = require('./auditRoutes');
 const { logFailedAccess } = require('../middleware/audit');
 const { enforceTenantIsolation } = require('../middleware/tenant');
 
@@ -88,6 +89,12 @@ router.use(`${API_VERSION}/clinics`, clinicRoutes);
 router.use(`${API_VERSION}/tenant`, enforceTenantIsolation, tenantRoutes);
 
 /**
+ * Audit Management Routes
+ * Handles audit log viewing and management
+ */
+router.use(`${API_VERSION}/audit`, auditRoutes);
+
+/**
  * API Documentation endpoint
  */
 router.get(`${API_VERSION}/docs`, (req, res) => {
@@ -140,6 +147,10 @@ router.get(`${API_VERSION}/docs`, (req, res) => {
         'PUT /visits/:id/treatment-plan': 'Add treatment plan (Doctor only)',
         'PUT /visits/:id/follow-up-instructions': 'Add follow-up instructions',
         'PUT /visits/:id/close': 'Close visit (Doctor only)'
+      },
+      audit: {
+        'GET /audit/logs': 'Get audit logs',
+        'POST /audit/log': 'Create manual audit log'
       }
     },
     authentication: 'Bearer JWT token required',

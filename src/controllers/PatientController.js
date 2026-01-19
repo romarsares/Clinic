@@ -8,6 +8,7 @@
 
 const { body, param, query, validationResult } = require('express-validator');
 const Patient = require('../models/Patient');
+const AuditService = require('../services/AuditService');
 const db = require('../config/database');
 
 class PatientController {
@@ -59,6 +60,9 @@ class PatientController {
             const patientData = { ...req.body, clinic_id: clinicId };
 
             const patient = await this.patientModel.create(patientData);
+            
+            // Log patient creation
+            await AuditService.logCRUD(req, 'create', 'patient', patient.id, null, patient);
             
             res.status(201).json({
                 success: true,
@@ -144,6 +148,9 @@ class PatientController {
                 }
             }
 
+            // Log clinical data access
+            await AuditService.logClinicalAccess(req, 'patient_demographics', id);
+
             res.json({
                 success: true,
                 data: patient
@@ -196,6 +203,9 @@ class PatientController {
             }
 
             const updatedPatient = await this.patientModel.update(id, req.body, patient.clinic_id);
+            
+            // Log patient update
+            await AuditService.logCRUD(req, 'update', 'patient', id, patient, updatedPatient);
             
             res.json({
                 success: true,

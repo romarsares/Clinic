@@ -31,7 +31,7 @@
 - [x] Implement **Appointment Management** (basic create, update, cancel)  
 - [x] Implement **Patient Demographics** (name, contact, DOB, gender)
 - [x] Setup **multi-tenant DB isolation**  
-- [ ] Implement **audit logs for all core actions**  
+- [x] Implement **audit logs for all core actions**  
 - [ ] Implement basic **UI skeleton** for dashboards (frontend placeholder)  
 
 **Exit Criteria:**  
