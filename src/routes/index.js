@@ -19,6 +19,8 @@ const visitRoutes = require('./visits');
 const authRoutes = require('./authRoutes');
 const clinicRoutes = require('./clinicRoutes');
 const userRoutes = require('./userRoutes');
+const patientRoutes = require('./patientRoutes');
+const appointmentRoutes = require('./appointmentRoutes');
 const { logFailedAccess } = require('../middleware/audit');
 
 const router = express.Router();
@@ -54,6 +56,18 @@ router.use(`${API_VERSION}/auth`, authRoutes);
 router.use(`${API_VERSION}/users`, userRoutes);
 
 /**
+ * Patient Management Routes
+ * Handles patient demographics and parent-child relationships
+ */
+router.use(`${API_VERSION}/patients`, patientRoutes);
+
+/**
+ * Appointment Management Routes
+ * Handles appointment scheduling, updates, and cancellations
+ */
+router.use(`${API_VERSION}/appointments`, appointmentRoutes);
+
+/**
  * Clinical Documentation Routes
  * Handles visit records, diagnoses, vital signs, treatment plans
  */
@@ -87,6 +101,26 @@ router.get(`${API_VERSION}/docs`, (req, res) => {
         'PUT /users/:id/status': 'Update user status',
         'PUT /users/:id/password': 'Change password',
         'DELETE /users/:id': 'Delete user'
+      },
+      patients: {
+        'GET /patients': 'List patients',
+        'POST /patients': 'Create new patient',
+        'GET /patients/search': 'Search patients',
+        'GET /patients/:id': 'Get patient details',
+        'PUT /patients/:id': 'Update patient',
+        'POST /patients/:id/children': 'Add child to parent',
+        'GET /patients/:id/children': 'Get patient children',
+        'GET /patients/:id/parent': 'Get patient parent'
+      },
+      appointments: {
+        'GET /appointments': 'List appointments',
+        'POST /appointments': 'Create new appointment',
+        'GET /appointments/calendar': 'Get calendar view',
+        'GET /appointments/today': 'Get today appointments',
+        'GET /appointments/:id': 'Get appointment details',
+        'PUT /appointments/:id': 'Update appointment',
+        'PUT /appointments/:id/status': 'Update appointment status',
+        'DELETE /appointments/:id': 'Cancel appointment'
       },
       visits: {
         'POST /visits': 'Create new visit',
