@@ -18,6 +18,7 @@ const express = require('express');
 const visitRoutes = require('./visits');
 const authRoutes = require('./authRoutes');
 const clinicRoutes = require('./clinicRoutes');
+const userRoutes = require('./userRoutes');
 const { logFailedAccess } = require('../middleware/audit');
 
 const router = express.Router();
@@ -47,6 +48,12 @@ router.get('/health', (req, res) => {
 router.use(`${API_VERSION}/auth`, authRoutes);
 
 /**
+ * User Management Routes
+ * Handles user management within clinic tenants
+ */
+router.use(`${API_VERSION}/users`, userRoutes);
+
+/**
  * Clinical Documentation Routes
  * Handles visit records, diagnoses, vital signs, treatment plans
  */
@@ -70,6 +77,16 @@ router.get(`${API_VERSION}/docs`, (req, res) => {
       auth: {
         'POST /auth/login': 'User login',
         'POST /auth/register': 'User registration'
+      },
+      users: {
+        'GET /users': 'List clinic users',
+        'POST /users': 'Create new user',
+        'GET /users/:id': 'Get user details',
+        'PUT /users/:id': 'Update user',
+        'PUT /users/:id/roles': 'Update user roles',
+        'PUT /users/:id/status': 'Update user status',
+        'PUT /users/:id/password': 'Change password',
+        'DELETE /users/:id': 'Delete user'
       },
       visits: {
         'POST /visits': 'Create new visit',

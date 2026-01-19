@@ -26,7 +26,7 @@
 
 - [x] Implement **Authentication & RBAC** (Owner, Doctor, Staff, Admin, Parent, Lab Technician)  
 - [x] Implement **Tenant / Clinic Management**  
-- [ ] Implement **User Management** per tenant  
+- [x] Implement **User Management** per tenant  
 - [ ] Implement **Parent → Child relationship** (immutable DOB)  
 - [ ] Implement **Appointment Management** (basic create, update, cancel)  
 - [ ] Implement **Patient Demographics** (name, contact, DOB, gender)
