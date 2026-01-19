@@ -2,7 +2,7 @@
 echo Initializing Clinic SaaS Database...
 echo.
 
-"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -pN1mbu412354 < "%~dp0init-db.sql"
+"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -pN1mbu$12354 < "%~dp0init-db.sql"
 
 if %ERRORLEVEL% EQU 0 (
     echo.
