@@ -23,6 +23,7 @@ const patientRoutes = require('./patientRoutes');
 const appointmentRoutes = require('./appointmentRoutes');
 const tenantRoutes = require('./tenantRoutes');
 const auditRoutes = require('./auditRoutes');
+const medicalHistoryRoutes = require('./medicalHistoryRoutes');
 const { logFailedAccess } = require('../middleware/audit');
 const { enforceTenantIsolation } = require('../middleware/tenant');
 
@@ -75,6 +76,12 @@ router.use(`${API_VERSION}/appointments`, enforceTenantIsolation, appointmentRou
  * Handles visit records, diagnoses, vital signs, treatment plans
  */
 router.use(`${API_VERSION}/visits`, enforceTenantIsolation, visitRoutes);
+
+/**
+ * Medical History Routes
+ * Handles patient medical history, allergies, medications, family history
+ */
+router.use(`${API_VERSION}/medical-history`, medicalHistoryRoutes);
 
 /**
  * Clinic Management Routes
@@ -147,6 +154,15 @@ router.get(`${API_VERSION}/docs`, (req, res) => {
         'PUT /visits/:id/treatment-plan': 'Add treatment plan (Doctor only)',
         'PUT /visits/:id/follow-up-instructions': 'Add follow-up instructions',
         'PUT /visits/:id/close': 'Close visit (Doctor only)'
+      },
+      medical_history: {
+        'GET /medical-history/:patientId': 'Get complete medical history',
+        'POST /medical-history/:patientId/allergies': 'Add allergy record',
+        'POST /medical-history/:patientId/medications': 'Add current medication',
+        'POST /medical-history/:patientId/past-history': 'Add past medical history',
+        'POST /medical-history/:patientId/family-history': 'Add family history',
+        'PUT /medical-history/allergies/:allergyId/status': 'Update allergy status',
+        'PUT /medical-history/medications/:medicationId/stop': 'Stop medication'
       },
       audit: {
         'GET /audit/logs': 'Get audit logs',

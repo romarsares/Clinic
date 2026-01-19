@@ -46,35 +46,35 @@
 ## Phase 2: Clinical Documentation
 **Goal:** Build comprehensive clinical documentation capabilities.
 
-- [ ] **Visit Records Module:**
-  - [ ] Chief complaint entry
-  - [ ] **Diagnosis entry** (primary and secondary)
-  - [ ] **Treatment plan documentation** (medications, procedures, recommendations)
-  - [ ] Vital signs recording (temperature, BP, heart rate, weight, height)
-  - [ ] Physical examination notes
-  - [ ] Clinical assessments
-  - [ ] Follow-up instructions
-- [ ] **Medical History Tracking:**
-  - [ ] Allergy records management
-  - [ ] Current medications list
-  - [ ] Past medical history
-  - [ ] Family medical history (optional)
-- [ ] **Clinical Note Templates:**
-  - [ ] Pediatric consultation template
-  - [ ] General consultation template
-  - [ ] Follow-up visit template
-- [ ] **Role-based access for clinical data:**
-  - [ ] Only doctors can enter/edit diagnoses
-  - [ ] Only doctors can create treatment plans
-  - [ ] Staff can view but not edit clinical notes
-- [ ] **Enhanced audit logging for clinical actions:**
-  - [ ] Log all diagnosis entries
-  - [ ] Log all treatment modifications
-  - [ ] Log clinical note access
-- [ ] **Clinical data validation:**
-  - [ ] Required fields for complete documentation
-  - [ ] Date/time validation for visit records
-  - [ ] Diagnosis code validation (if using ICD-10)
+- [x] **Visit Records Module:**
+  - [x] Chief complaint entry
+  - [x] **Diagnosis entry** (primary and secondary)
+  - [x] **Treatment plan documentation** (medications, procedures, recommendations)
+  - [x] Vital signs recording (temperature, BP, heart rate, weight, height)
+  - [x] Physical examination notes
+  - [x] Clinical assessments
+  - [x] Follow-up instructions
+- [x] **Medical History Tracking:**
+  - [x] Allergy records management
+  - [x] Current medications list
+  - [x] Past medical history
+  - [x] Family medical history (optional)
+- [x] **Clinical Note Templates:**
+  - [x] Pediatric consultation template
+  - [x] General consultation template
+  - [x] Follow-up visit template
+- [x] **Role-based access for clinical data:**
+  - [x] Only doctors can enter/edit diagnoses
+  - [x] Only doctors can create treatment plans
+  - [x] Staff can view but not edit clinical notes
+- [x] **Enhanced audit logging for clinical actions:**
+  - [x] Log all diagnosis entries
+  - [x] Log all treatment modifications
+  - [x] Log clinical note access
+- [x] **Clinical data validation:**
+  - [x] Required fields for complete documentation
+  - [x] Date/time validation for visit records
+  - [x] Diagnosis code validation (if using ICD-10)
 
 **Exit Criteria:**  
 - Doctors can document complete visits with diagnosis and treatment
