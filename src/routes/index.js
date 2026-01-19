@@ -24,6 +24,8 @@ const appointmentRoutes = require('./appointmentRoutes');
 const tenantRoutes = require('./tenantRoutes');
 const auditRoutes = require('./auditRoutes');
 const medicalHistoryRoutes = require('./medicalHistoryRoutes');
+const labRoutes = require('./labRoutes');
+const patientHistoryRoutes = require('./patientHistoryRoutes');
 const { logFailedAccess } = require('../middleware/audit');
 const { enforceTenantIsolation } = require('../middleware/tenant');
 
@@ -82,6 +84,18 @@ router.use(`${API_VERSION}/visits`, enforceTenantIsolation, visitRoutes);
  * Handles patient medical history, allergies, medications, family history
  */
 router.use(`${API_VERSION}/medical-history`, medicalHistoryRoutes);
+
+/**
+ * Laboratory Routes
+ * Handles lab requests, results, and dashboard statistics
+ */
+router.use(`${API_VERSION}/lab`, labRoutes);
+
+/**
+ * Patient History & Reporting Routes
+ * Handles medical history, search, reports, and pediatric features
+ */
+router.use(`${API_VERSION}/patient-history`, patientHistoryRoutes);
 
 /**
  * Clinic Management Routes
@@ -163,6 +177,29 @@ router.get(`${API_VERSION}/docs`, (req, res) => {
         'POST /medical-history/:patientId/family-history': 'Add family history',
         'PUT /medical-history/allergies/:allergyId/status': 'Update allergy status',
         'PUT /medical-history/medications/:medicationId/stop': 'Stop medication'
+      },
+      lab: {
+        'POST /lab/requests': 'Create lab request (Doctor only)',
+        'GET /lab/requests': 'List lab requests',
+        'GET /lab/requests/:id': 'Get lab request details',
+        'PUT /lab/requests/:id/status': 'Update lab request status',
+        'POST /lab/results': 'Enter lab results (Lab Technician only)',
+        'GET /lab/results/request/:labRequestId': 'Get lab result',
+        'GET /lab/results/patient/:patientId': 'Get patient lab history',
+        'GET /lab/templates': 'Get lab test templates',
+        'GET /lab/dashboard': 'Get lab dashboard statistics'
+      },
+      patient_history: {
+        'GET /patient-history/patients/:patientId/history': 'Get complete patient history',
+        'GET /patient-history/patients/:patientId/summary': 'Generate patient summary report',
+        'GET /patient-history/patients/:patientId/referral': 'Generate referral report',
+        'GET /patient-history/search/diagnosis': 'Search by diagnosis',
+        'GET /patient-history/search/advanced': 'Advanced patient search',
+        'GET /patient-history/reports/:type': 'Get clinical reports',
+        'GET /patient-history/patients/:patientId/growth-chart': 'Get growth chart data',
+        'GET /patient-history/patients/:patientId/milestones': 'Get developmental milestones',
+        'GET /patient-history/patients/:patientId/vaccines/compliance': 'Get vaccine compliance',
+        'POST /patient-history/patients/:patientId/vaccines': 'Add vaccine record'
       },
       audit: {
         'GET /audit/logs': 'Get audit logs',
