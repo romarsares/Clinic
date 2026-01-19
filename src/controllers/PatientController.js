@@ -195,7 +195,7 @@ class PatientController {
                 });
             }
 
-            const updatedPatient = await this.patientModel.update(id, req.body);
+            const updatedPatient = await this.patientModel.update(id, req.body, patient.clinic_id);
             
             res.json({
                 success: true,
@@ -294,7 +294,7 @@ class PatientController {
                 }
             }
 
-            const children = await this.patientModel.getChildren(id);
+            const children = await this.patientModel.getChildren(id, patient.clinic_id);
             
             res.json({
                 success: true,
@@ -334,7 +334,7 @@ class PatientController {
                 });
             }
 
-            const parent = await this.patientModel.getParent(id);
+            const parent = await this.patientModel.getParent(id, patient.clinic_id);
             
             res.json({
                 success: true,

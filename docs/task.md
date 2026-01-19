@@ -30,7 +30,7 @@
 - [x] Implement **Parent → Child relationship** (immutable DOB)  
 - [x] Implement **Appointment Management** (basic create, update, cancel)  
 - [x] Implement **Patient Demographics** (name, contact, DOB, gender)
-- [ ] Setup **multi-tenant DB isolation**  
+- [x] Setup **multi-tenant DB isolation**  
 - [ ] Implement **audit logs for all core actions**  
 - [ ] Implement basic **UI skeleton** for dashboards (frontend placeholder)  
 

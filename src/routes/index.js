@@ -21,7 +21,9 @@ const clinicRoutes = require('./clinicRoutes');
 const userRoutes = require('./userRoutes');
 const patientRoutes = require('./patientRoutes');
 const appointmentRoutes = require('./appointmentRoutes');
+const tenantRoutes = require('./tenantRoutes');
 const { logFailedAccess } = require('../middleware/audit');
+const { enforceTenantIsolation } = require('../middleware/tenant');
 
 const router = express.Router();
 
@@ -53,31 +55,37 @@ router.use(`${API_VERSION}/auth`, authRoutes);
  * User Management Routes
  * Handles user management within clinic tenants
  */
-router.use(`${API_VERSION}/users`, userRoutes);
+router.use(`${API_VERSION}/users`, enforceTenantIsolation, userRoutes);
 
 /**
  * Patient Management Routes
  * Handles patient demographics and parent-child relationships
  */
-router.use(`${API_VERSION}/patients`, patientRoutes);
+router.use(`${API_VERSION}/patients`, enforceTenantIsolation, patientRoutes);
 
 /**
  * Appointment Management Routes
  * Handles appointment scheduling, updates, and cancellations
  */
-router.use(`${API_VERSION}/appointments`, appointmentRoutes);
+router.use(`${API_VERSION}/appointments`, enforceTenantIsolation, appointmentRoutes);
 
 /**
  * Clinical Documentation Routes
  * Handles visit records, diagnoses, vital signs, treatment plans
  */
-router.use(`${API_VERSION}/visits`, visitRoutes);
+router.use(`${API_VERSION}/visits`, enforceTenantIsolation, visitRoutes);
 
 /**
  * Clinic Management Routes
  * Handles clinic profile and settings
  */
 router.use(`${API_VERSION}/clinics`, clinicRoutes);
+
+/**
+ * Tenant Management Routes
+ * Handles multi-tenant monitoring and validation
+ */
+router.use(`${API_VERSION}/tenant`, enforceTenantIsolation, tenantRoutes);
 
 /**
  * API Documentation endpoint

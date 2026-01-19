@@ -6,9 +6,12 @@
  * Purpose: Handles patient demographics and parent-child relationship data operations
  */
 
+const { TenantDB, TenantValidator } = require('../middleware/tenant');
+
 class Patient {
     constructor(db) {
         this.db = db;
+        this.tenantDB = new TenantDB(db);
     }
 
     /**
