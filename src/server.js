@@ -5,6 +5,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 const routes = require('./routes');
+const uiRoutes = require('./routes/uiRoutes');
 const db = require('./config/database');
 const envPath = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
 require('dotenv').config({ path: envPath });
@@ -70,6 +71,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Compression
 app.use(compression());
 
+// Serve static files
+app.use(express.static('public'));
+
 // Request logging middleware
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.path}`, {
@@ -92,6 +96,9 @@ app.get('/health', (req, res) => {
 
 // Test database connection on startup
 db.testConnection();
+
+// Register UI routes (before API routes)
+app.use('/', uiRoutes);
 
 // Register API routes
 app.use('/', routes);

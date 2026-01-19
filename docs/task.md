@@ -32,7 +32,7 @@
 - [x] Implement **Patient Demographics** (name, contact, DOB, gender)
 - [x] Setup **multi-tenant DB isolation**  
 - [x] Implement **audit logs for all core actions**  
-- [ ] Implement basic **UI skeleton** for dashboards (frontend placeholder)  
+- [x] Implement basic **UI skeleton** for dashboards (frontend placeholder)  
 
 **Exit Criteria:**  
 - RBAC enforced with all roles including Lab Technician
