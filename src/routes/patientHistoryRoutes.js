@@ -1,13 +1,13 @@
 const express = require('express');
 const PatientHistoryController = require('../controllers/PatientHistoryController');
-const auth = require('../middleware/auth');
-const tenant = require('../middleware/tenant');
+const { authenticateToken } = require('../middleware/auth');
+const { enforceTenantIsolation } = require('../middleware/tenant');
 
 const router = express.Router();
 
 // Apply authentication and tenant middleware to all routes
-router.use(auth);
-router.use(tenant.validateTenant);
+router.use(authenticateToken);
+router.use(enforceTenantIsolation);
 
 // Patient history routes
 router.get('/patients/:patientId/history', PatientHistoryController.getPatientHistory);

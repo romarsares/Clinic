@@ -5,7 +5,7 @@
 
 const express = require('express');
 const BillingController = require('../controllers/BillingController');
-const { authenticateToken, requireRoles } = require('../middleware/auth');
+const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.use(authenticateToken);
  * @access  Staff, Doctor
  */
 router.post('/bills', 
-  requireRoles(['Staff', 'Doctor']), 
+  requireRole(['Staff', 'Doctor']), 
   BillingController.createBillForVisit
 );
 
@@ -28,7 +28,7 @@ router.post('/bills',
  * @access  Staff, Doctor
  */
 router.post('/bills/:billId/lab-charges', 
-  requireRoles(['Staff', 'Doctor']), 
+  requireRole(['Staff', 'Doctor']), 
   BillingController.addLabCharges
 );
 
@@ -38,7 +38,7 @@ router.post('/bills/:billId/lab-charges',
  * @access  Staff, Doctor, Owner
  */
 router.get('/bills/:billId', 
-  requireRoles(['Staff', 'Doctor', 'Owner']), 
+  requireRole(['Staff', 'Doctor', 'Owner']), 
   BillingController.getBillDetails
 );
 
@@ -48,7 +48,7 @@ router.get('/bills/:billId',
  * @access  Staff, Owner
  */
 router.put('/bills/:billId/status', 
-  requireRoles(['Staff', 'Owner']), 
+  requireRole(['Staff', 'Owner']), 
   BillingController.updateBillStatus
 );
 
@@ -58,7 +58,7 @@ router.put('/bills/:billId/status',
  * @access  Staff, Owner
  */
 router.get('/pending', 
-  requireRoles(['Staff', 'Owner']), 
+  requireRole(['Staff', 'Owner']), 
   BillingController.getPendingBills
 );
 
@@ -68,7 +68,7 @@ router.get('/pending',
  * @access  Owner
  */
 router.get('/revenue', 
-  requireRoles(['Owner']), 
+  requireRole(['Owner']), 
   BillingController.getRevenueByService
 );
 

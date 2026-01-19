@@ -1,13 +1,13 @@
 const express = require('express');
 const LabController = require('../controllers/LabController');
-const auth = require('../middleware/auth');
-const tenant = require('../middleware/tenant');
+const { authenticateToken } = require('../middleware/auth');
+const { enforceTenantIsolation } = require('../middleware/tenant');
 
 const router = express.Router();
 
 // Apply authentication and tenant middleware to all routes
-router.use(auth);
-router.use(tenant.validateTenant);
+router.use(authenticateToken);
+router.use(enforceTenantIsolation);
 
 // Lab request routes
 router.post('/requests', LabController.createLabRequest);
