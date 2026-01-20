@@ -14,7 +14,7 @@ class UIController {
      * Serve dashboard page
      */
     static serveDashboard(req, res) {
-        const dashboardPath = path.join(__dirname, '../../public/views/dashboard-nextui.html');
+        const dashboardPath = path.join(__dirname, '../../public/views/dashboard-clean.html');
         res.sendFile(dashboardPath);
     }
 
