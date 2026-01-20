@@ -69,17 +69,17 @@ class AuditService {
      */
     static async logAuth(user, action, req, success = true, reason = null) {
         return this.logAction({
-            clinic_id: user?.clinic_id || null,
+            clinic_id: user?.clinic_id || 1,
             user_id: user?.id || null,
             action: `auth_${action}`,
             entity: 'user',
             entity_id: user?.id || null,
-            ip_address: req.ip || req.connection?.remoteAddress,
-            user_agent: req.get('User-Agent'),
-            method: req.method,
-            url: req.originalUrl,
+            ip_address: req.ip || req.connection?.remoteAddress || '127.0.0.1',
+            user_agent: req.get('User-Agent') || 'Unknown',
+            method: req.method || 'POST',
+            url: req.originalUrl || '/auth/login',
             status_code: success ? 200 : 401,
-            additional_context: {
+            new_value: {
                 success,
                 reason,
                 email: user?.email
@@ -181,8 +181,18 @@ class AuditService {
     }
 
     /**
-     * Sanitize sensitive data
+     * Log with tenant context
      */
+    static async log(tenantId, logData) {
+        return this.logAction({
+            clinic_id: tenantId,
+            user_id: logData.user_id,
+            action: logData.action,
+            entity: logData.resource_type,
+            entity_id: logData.resource_id,
+            new_value: logData.details
+        });
+    }
     static sanitizeData(data) {
         if (!data || typeof data !== 'object') return data;
 

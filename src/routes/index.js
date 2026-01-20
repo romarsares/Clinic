@@ -19,21 +19,17 @@ const visitRoutes = require('./visits');
 const authRoutes = require('./authRoutes');
 const clinicRoutes = require('./clinicRoutes');
 const userRoutes = require('./userRoutes');
+const auditRoutes = require('./auditRoutes');
 const patientRoutes = require('./patientRoutes');
 const appointmentRoutes = require('./appointmentRoutes');
 const tenantRoutes = require('./tenantRoutes');
-const auditRoutes = require('./auditRoutes');
 const medicalHistoryRoutes = require('./medicalHistoryRoutes');
 const labRoutes = require('./labRoutes');
 const patientHistoryRoutes = require('./patientHistoryRoutes');
 const billingRoutes = require('./billingRoutes');
-const { logFailedAccess } = require('../middleware/audit');
 const { enforceTenantIsolation } = require('../middleware/tenant');
 
 const router = express.Router();
-
-// Apply failed access logging to all routes
-router.use(logFailedAccess);
 
 // API version prefix
 const API_VERSION = '/api/v1';
@@ -57,10 +53,16 @@ router.get('/health', (req, res) => {
 router.use(`${API_VERSION}/auth`, authRoutes);
 
 /**
+ * Test Authentication Routes (for debugging)
+ */
+const testAuthRoutes = require('./test-auth');
+router.use(`${API_VERSION}/test-auth`, testAuthRoutes);
+
+/**
  * User Management Routes
  * Handles user management within clinic tenants
  */
-router.use(`${API_VERSION}/users`, enforceTenantIsolation, userRoutes);
+router.use(`${API_VERSION}/users`, userRoutes);
 
 /**
  * Patient Management Routes
@@ -100,7 +102,7 @@ router.use(`${API_VERSION}/patient-history`, patientHistoryRoutes);
 
 /**
  * Billing Routes
- * Handles billing operations and revenue tracking
+ * Handles clinical billing, charges, and revenue tracking
  */
 router.use(`${API_VERSION}/billing`, enforceTenantIsolation, billingRoutes);
 
@@ -207,6 +209,16 @@ router.get(`${API_VERSION}/docs`, (req, res) => {
         'GET /patient-history/patients/:patientId/milestones': 'Get developmental milestones',
         'GET /patient-history/patients/:patientId/vaccines/compliance': 'Get vaccine compliance',
         'POST /patient-history/patients/:patientId/vaccines': 'Add vaccine record'
+      },
+      billing: {
+        'POST /billing/visits/:visitId/patients/:patientId/bill': 'Generate visit bill',
+        'POST /billing/lab-requests/:labRequestId/charges': 'Add lab charges to bill',
+        'GET /billing/patients/:patientId/bills': 'Get patient bills',
+        'GET /billing/bills/:billId': 'Get bill details',
+        'POST /billing/bills/:billId/charges': 'Add service charge',
+        'PUT /billing/bills/:billId/status': 'Update bill status',
+        'GET /billing/revenue/by-service': 'Get revenue by service type',
+        'GET /billing/dashboard': 'Get billing dashboard'
       },
       audit: {
         'GET /audit/logs': 'Get audit logs',

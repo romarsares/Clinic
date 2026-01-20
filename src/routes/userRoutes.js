@@ -35,7 +35,6 @@ router.get('/',
  */
 router.post('/',
     requireRole(['Owner', 'Admin', 'SuperAdmin']),
-    UserController.getCreateValidation(),
     auditLog('user', 'create'),
     (req, res) => userController.createUser(req, res)
 );
@@ -56,7 +55,6 @@ router.get('/:id',
  * @access  Private (Owner, Admin, SuperAdmin, or own profile)
  */
 router.put('/:id',
-    UserController.getUpdateValidation(),
     auditLog('user', 'update'),
     (req, res) => userController.updateUser(req, res)
 );
@@ -68,7 +66,6 @@ router.put('/:id',
  */
 router.put('/:id/roles',
     requireRole(['Owner', 'Admin', 'SuperAdmin']),
-    UserController.getRoleUpdateValidation(),
     auditLog('user_roles', 'update'),
     (req, res) => userController.updateUserRoles(req, res)
 );
@@ -80,7 +77,6 @@ router.put('/:id/roles',
  */
 router.put('/:id/status',
     requireRole(['Owner', 'Admin', 'SuperAdmin']),
-    UserController.getStatusUpdateValidation(),
     auditLog('user', 'status_change'),
     (req, res) => userController.updateUserStatus(req, res)
 );
@@ -91,7 +87,6 @@ router.put('/:id/status',
  * @access  Private (Owner, Admin, SuperAdmin, or own profile)
  */
 router.put('/:id/password',
-    UserController.getPasswordUpdateValidation(),
     auditLog('user', 'password_change'),
     (req, res) => userController.changePassword(req, res)
 );

@@ -69,4 +69,11 @@ router.get('/users', UIController.serveUsers);
  */
 router.get('/audit', UIController.serveAudit);
 
+/**
+ * @route   GET /settings
+ * @desc    Serve settings page placeholder
+ * @access  Public
+ */
+router.get('/settings', UIController.serveSettings);
+
 module.exports = router;

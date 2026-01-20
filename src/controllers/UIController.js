@@ -129,37 +129,11 @@ class UIController {
     }
 
     /**
-     * Serve users page (placeholder)
+     * Serve users page
      */
     static serveUsers(req, res) {
-        res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Users - Clinic SaaS</title>
-                <link rel="stylesheet" href="/css/dashboard.css">
-            </head>
-            <body>
-                <div class="header">
-                    <h1>User Management</h1>
-                    <a href="/dashboard" class="btn">← Back to Dashboard</a>
-                </div>
-                <div class="main-content" style="margin-left: 0;">
-                    <div class="card">
-                        <h3>User Management Module</h3>
-                        <p>This is a placeholder for the user management interface.</p>
-                        <p>Features will include:</p>
-                        <ul>
-                            <li>User creation and role assignment</li>
-                            <li>Role-based access control</li>
-                            <li>User status management</li>
-                            <li>Password management</li>
-                        </ul>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `);
+        const usersPath = path.join(__dirname, '../../public/views/users.html');
+        res.sendFile(usersPath);
     }
 
     /**
@@ -188,6 +162,40 @@ class UIController {
                             <li>User activity monitoring</li>
                             <li>Clinical data access logs</li>
                             <li>Security event tracking</li>
+                        </ul>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `);
+    }
+
+    /**
+     * Serve settings page (placeholder)
+     */
+    static serveSettings(req, res) {
+        res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Settings - Clinic SaaS</title>
+                <link rel="stylesheet" href="/css/dashboard.css">
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Settings</h1>
+                    <a href="/dashboard" class="btn">← Back to Dashboard</a>
+                </div>
+                <div class="main-content" style="margin-left: 0;">
+                    <div class="card">
+                        <h3>Settings Module</h3>
+                        <p>This is a placeholder for the settings interface.</p>
+                        <p>Features will include:</p>
+                        <ul>
+                            <li>Clinic profile and configuration</li>
+                            <li>User preferences</li>
+                            <li>System settings</li>
+                            <li>Security settings</li>
                         </ul>
                     </div>
                 </div>

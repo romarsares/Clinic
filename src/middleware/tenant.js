@@ -32,6 +32,16 @@ const enforceTenantIsolation = (req, res, next) => {
 };
 
 /**
+ * Validate tenant middleware
+ */
+const validateTenant = (req, res, next) => {
+    if (!req.user || !req.user.tenant_id) {
+        return res.status(403).json({ error: 'Access denied: No tenant association' });
+    }
+    next();
+};
+
+/**
  * Validate tenant access to resource
  */
 const validateTenantAccess = (tableName, resourceId, clinicId) => {
@@ -77,6 +87,14 @@ const validateTenantAccess = (tableName, resourceId, clinicId) => {
  * Database query wrapper with automatic tenant filtering
  */
 class TenantDB {
+    static getConnection(tenantId) {
+        return {
+            execute: async (query, params = []) => {
+                return db.execute(query, params);
+            }
+        };
+    }
+
     constructor(db) {
         this.db = db;
     }
@@ -307,6 +325,7 @@ const TenantMonitor = {
 
 module.exports = {
     enforceTenantIsolation,
+    validateTenant,
     validateTenantAccess,
     TenantDB,
     TenantValidator,
