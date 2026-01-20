@@ -32,7 +32,7 @@ router.use(authenticateToken);
  * @access  Private (Doctor, Staff)
  */
 router.post('/',
-  requireRole(['Doctor', 'Staff']),
+  requireRole(['Doctor', 'Staff', 'Super User']),
   VisitController.getCreateVisitValidation(),
   auditLog('visit', 'create'),
   (req, res) => visitController.createVisit(req, res)
@@ -44,7 +44,7 @@ router.post('/',
  * @access  Private (Doctor, Staff)
  */
 router.get('/:id',
-  requireRole(['Doctor', 'Staff']),
+  requireRole(['Doctor', 'Staff', 'Super User']),
   auditLog('visit', 'view'),
   (req, res) => visitController.getVisit(req, res)
 );
@@ -55,7 +55,7 @@ router.get('/:id',
  * @access  Private (Doctor, Staff)
  */
 router.put('/:id/chief-complaint',
-  requireRole(['Doctor', 'Staff']),
+  requireRole(['Doctor', 'Staff', 'Super User']),
   VisitController.getChiefComplaintValidation(),
   auditLog('chief_complaint', 'create'),
   (req, res) => visitController.addChiefComplaint(req, res)
@@ -67,7 +67,7 @@ router.put('/:id/chief-complaint',
  * @access  Private (Doctor only)
  */
 router.post('/:id/diagnoses',
-  requireRole(['Doctor']),
+  requireRole(['Doctor', 'Super User']),
   VisitController.getDiagnosisValidation(),
   auditLog('diagnosis', 'create'),
   (req, res) => visitController.addDiagnosis(req, res)
@@ -79,7 +79,7 @@ router.post('/:id/diagnoses',
  * @access  Private (Doctor, Staff)
  */
 router.put('/:id/vital-signs',
-  requireRole(['Doctor', 'Staff']),
+  requireRole(['Doctor', 'Staff', 'Super User']),
   VisitController.getVitalSignsValidation(),
   auditLog('vital_signs', 'create'),
   (req, res) => visitController.recordVitalSigns(req, res)
@@ -91,7 +91,7 @@ router.put('/:id/vital-signs',
  * @access  Private (Doctor only)
  */
 router.put('/:id/clinical-assessment',
-  requireRole(['Doctor']),
+  requireRole(['Doctor', 'Super User']),
   VisitController.getClinicalAssessmentValidation(),
   auditLog('clinical_assessment', 'create'),
   (req, res) => visitController.addClinicalAssessment(req, res)
@@ -103,7 +103,7 @@ router.put('/:id/clinical-assessment',
  * @access  Private (Doctor only)
  */
 router.put('/:id/treatment-plan',
-  requireRole(['Doctor']),
+  requireRole(['Doctor', 'Super User']),
   VisitController.getTreatmentPlanValidation(),
   auditLog('treatment_plan', 'create'),
   (req, res) => visitController.addTreatmentPlan(req, res)
@@ -115,7 +115,7 @@ router.put('/:id/treatment-plan',
  * @access  Private (Doctor, Staff)
  */
 router.put('/:id/follow-up-instructions',
-  requireRole(['Doctor', 'Staff']),
+  requireRole(['Doctor', 'Staff', 'Super User']),
   VisitController.getFollowUpValidation(),
   auditLog('follow_up_instructions', 'create'),
   (req, res) => visitController.addFollowUpInstructions(req, res)
@@ -127,7 +127,7 @@ router.put('/:id/follow-up-instructions',
  * @access  Private (Doctor only)
  */
 router.put('/:id/close',
-  requireRole(['Doctor']),
+  requireRole(['Doctor', 'Super User']),
   auditLog('visit', 'close'),
   (req, res) => visitController.closeVisit(req, res)
 );

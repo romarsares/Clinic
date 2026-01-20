@@ -93,7 +93,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'clinic-saas-api',
+    service: 'curaone-api',
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development'
   });

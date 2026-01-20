@@ -1,6 +1,8 @@
-# Pediatric Clinic SaaS
+# CuraOne
 
-Clinic SaaS is a comprehensive, multi-tenant software-as-a-service platform designed for small and medium-sized clinics (SMEs). It serves as the "operating system" for a clinic, replacing chaotic manual processes with structured workflows for appointment management, patient records, **clinical documentation (diagnoses, treatments), laboratory management,** billing, and reporting.
+CuraOne is a comprehensive, multi-tenant software-as-a-service platform designed for small and medium-sized clinics (SMEs). It serves as the "operating system" for a clinic, replacing chaotic manual processes with structured workflows for appointment management, patient records, **clinical documentation (diagnoses, treatments), laboratory management,** billing, and reporting.
+
+**CuraOne — One Platform. Better Care.**
 
 ## 🏗️ Project Structure
 

@@ -108,12 +108,19 @@ const requireRole = (allowedRoles) => {
     }
 
     const userRoles = req.user.roles || [];
+    console.log('User roles:', userRoles, 'Required roles:', allowedRoles);
+    
+    // Super User / SuperAdmin has access to everything
+    if (userRoles.includes('Super User') || userRoles.includes('SuperAdmin')) {
+      return next();
+    }
+    
     const hasRequiredRole = allowedRoles.some(role => userRoles.includes(role));
 
     if (!hasRequiredRole) {
       return res.status(403).json({
         success: false,
-        message: `Access denied. Required roles: ${allowedRoles.join(', ')}`
+        message: `Access denied. Required roles: ${allowedRoles.join(', ')}. Your roles: ${userRoles.join(', ')}`
       });
     }
 
@@ -125,7 +132,7 @@ const requireRole = (allowedRoles) => {
  * Require specific permissions for access
  */
 const requirePermission = (requiredPermissions) => {
-  return async (req, res, next) => { // Ensure requiredPermissions is an array
+  return async (req, res, next) => {
     const permissionsToCheck = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
     try {
       if (!req.user) {
@@ -135,7 +142,12 @@ const requirePermission = (requiredPermissions) => {
         });
       }
 
-      // Owner role has all permissions
+      // Super User / SuperAdmin has all permissions
+      if (req.user.roles.includes('Super User') || req.user.roles.includes('SuperAdmin')) {
+        return next();
+      }
+
+      // Owner role has all permissions within their clinic
       if (req.user.roles.includes('Owner')) {
         return next();
       }

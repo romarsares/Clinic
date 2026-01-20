@@ -27,6 +27,7 @@ const medicalHistoryRoutes = require('./medicalHistoryRoutes');
 const labRoutes = require('./labRoutes');
 const patientHistoryRoutes = require('./patientHistoryRoutes');
 const billingRoutes = require('./billingRoutes');
+const featureRoutes = require('./featureRoutes');
 const { enforceTenantIsolation } = require('../middleware/tenant');
 
 const router = express.Router();
@@ -41,7 +42,7 @@ router.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    service: 'clinic-saas-api',
+    service: 'curaone-api',
     version: '1.0.0'
   });
 });
@@ -107,6 +108,12 @@ router.use(`${API_VERSION}/patient-history`, patientHistoryRoutes);
 router.use(`${API_VERSION}/billing`, enforceTenantIsolation, billingRoutes);
 
 /**
+ * Feature Management Routes
+ * Handles Super User feature toggle controls
+ */
+router.use(`${API_VERSION}/features`, featureRoutes);
+
+/**
  * Clinic Management Routes
  * Handles clinic profile and settings
  */
@@ -129,9 +136,10 @@ router.use(`${API_VERSION}/audit`, auditRoutes);
  */
 router.get(`${API_VERSION}/docs`, (req, res) => {
   res.json({
-    title: 'Pediatric Clinic SaaS API',
+    title: 'CuraOne API',
     version: '1.0.0',
     description: 'Multi-tenant clinic management system with clinical documentation',
+    tagline: 'CuraOne — One Platform. Better Care.',
     endpoints: {
       auth: {
         'POST /auth/login': 'User login',
@@ -219,6 +227,14 @@ router.get(`${API_VERSION}/docs`, (req, res) => {
         'PUT /billing/bills/:billId/status': 'Update bill status',
         'GET /billing/revenue/by-service': 'Get revenue by service type',
         'GET /billing/dashboard': 'Get billing dashboard'
+      },
+      features: {
+        'GET /features/clinics/:clinicId/features': 'Get clinic features (Super User)',
+        'POST /features/clinics/:clinicId/features/enable': 'Enable feature (Super User)',
+        'POST /features/clinics/:clinicId/features/disable': 'Disable feature (Super User)',
+        'PUT /features/clinics/:clinicId/features': 'Bulk update features (Super User)',
+        'GET /features/my-features': 'Get current user enabled features',
+        'GET /features/definitions': 'Get all feature definitions'
       },
       audit: {
         'GET /audit/logs': 'Get audit logs',

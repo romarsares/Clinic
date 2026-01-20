@@ -23,7 +23,7 @@ router.use(authenticateToken);
  * @access  Private (All clinic staff)
  */
 router.get('/',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician', 'Super User']),
     auditLog('patient', 'list'),
     (req, res) => patientController.listPatients(req, res)
 );
@@ -34,7 +34,7 @@ router.get('/',
  * @access  Private (Staff, Admin, Owner)
  */
 router.post('/',
-    requireRole(['Owner', 'Admin', 'Staff']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
     PatientController.getCreateValidation(),
     auditLog('patient', 'create'),
     (req, res) => patientController.createPatient(req, res)
@@ -46,7 +46,7 @@ router.post('/',
  * @access  Private (All clinic staff)
  */
 router.get('/search',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician', 'Super User']),
     auditLog('patient', 'search'),
     (req, res) => patientController.searchPatients(req, res)
 );
@@ -68,7 +68,7 @@ router.get('/:id',
  * @access  Private (Staff, Admin, Owner)
  */
 router.put('/:id',
-    requireRole(['Owner', 'Admin', 'Staff']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
     PatientController.getUpdateValidation(),
     auditLog('patient', 'update'),
     (req, res) => patientController.updatePatient(req, res)
@@ -80,7 +80,7 @@ router.put('/:id',
  * @access  Private (Staff, Admin, Owner)
  */
 router.post('/:id/children',
-    requireRole(['Owner', 'Admin', 'Staff']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
     PatientController.getChildValidation(),
     auditLog('patient_relationship', 'create'),
     (req, res) => patientController.addChild(req, res)
@@ -103,7 +103,7 @@ router.get('/:id/children',
  * @access  Private (All clinic staff)
  */
 router.get('/:id/parent',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician', 'Super User']),
     logClinicalAccess('patient_relationships'),
     auditLog('patient_relationship', 'view'),
     (req, res) => patientController.getParent(req, res)

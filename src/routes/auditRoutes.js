@@ -20,10 +20,10 @@ router.use(enforceTenantIsolation);
 /**
  * @route   GET /api/v1/audit/logs
  * @desc    Get audit logs for clinic
- * @access  Private (Owner, Admin, SuperAdmin)
+ * @access  Private (Owner, Admin, Super User)
  */
 router.get('/logs',
-    requireRole(['Owner', 'Admin', 'SuperAdmin']),
+    requireRole(['Owner', 'Admin', 'Super User']),
     async (req, res) => {
         try {
             const clinicId = req.user.clinic_id;
@@ -58,10 +58,10 @@ router.get('/logs',
 /**
  * @route   POST /api/v1/audit/log
  * @desc    Manually log an audit event
- * @access  Private (Owner, Admin, SuperAdmin)
+ * @access  Private (Owner, Admin, Super User)
  */
 router.post('/log',
-    requireRole(['Owner', 'Admin', 'SuperAdmin']),
+    requireRole(['Owner', 'Admin', 'Super User']),
     async (req, res) => {
         try {
             const { action, entity, entity_id, details } = req.body;

@@ -27,105 +27,27 @@ class UIController {
     }
 
     /**
-     * Serve patients page (placeholder)
+     * Serve patients page
      */
     static servePatients(req, res) {
-        res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Patients - Clinic SaaS</title>
-                <link rel="stylesheet" href="/css/dashboard.css">
-            </head>
-            <body>
-                <div class="header">
-                    <h1>Patients Management</h1>
-                    <a href="/dashboard" class="btn">← Back to Dashboard</a>
-                </div>
-                <div class="main-content" style="margin-left: 0;">
-                    <div class="card">
-                        <h3>Patients Module</h3>
-                        <p>This is a placeholder for the patients management interface.</p>
-                        <p>Features will include:</p>
-                        <ul>
-                            <li>Patient registration and demographics</li>
-                            <li>Parent-child relationships</li>
-                            <li>Patient search and filtering</li>
-                            <li>Medical history overview</li>
-                        </ul>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `);
+        const patientsPath = path.join(__dirname, '../../public/views/patients.html');
+        res.sendFile(patientsPath);
     }
 
     /**
-     * Serve appointments page (placeholder)
+     * Serve appointments page
      */
     static serveAppointments(req, res) {
-        res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Appointments - Clinic SaaS</title>
-                <link rel="stylesheet" href="/css/dashboard.css">
-            </head>
-            <body>
-                <div class="header">
-                    <h1>Appointment Management</h1>
-                    <a href="/dashboard" class="btn">← Back to Dashboard</a>
-                </div>
-                <div class="main-content" style="margin-left: 0;">
-                    <div class="card">
-                        <h3>Appointments Module</h3>
-                        <p>This is a placeholder for the appointment management interface.</p>
-                        <p>Features will include:</p>
-                        <ul>
-                            <li>Appointment scheduling and calendar view</li>
-                            <li>Time conflict detection</li>
-                            <li>Appointment status management</li>
-                            <li>Patient appointment history</li>
-                        </ul>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `);
+        const appointmentsPath = path.join(__dirname, '../../public/views/appointments.html');
+        res.sendFile(appointmentsPath);
     }
 
     /**
-     * Serve visits page (placeholder)
+     * Serve visits page
      */
     static serveVisits(req, res) {
-        res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Visits - Clinic SaaS</title>
-                <link rel="stylesheet" href="/css/dashboard.css">
-            </head>
-            <body>
-                <div class="header">
-                    <h1>Clinical Visits</h1>
-                    <a href="/dashboard" class="btn">← Back to Dashboard</a>
-                </div>
-                <div class="main-content" style="margin-left: 0;">
-                    <div class="card">
-                        <h3>Clinical Documentation Module</h3>
-                        <p>This is a placeholder for the clinical visits interface.</p>
-                        <p>Features will include:</p>
-                        <ul>
-                            <li>Visit records and documentation</li>
-                            <li>Diagnosis entry and management</li>
-                            <li>Vital signs recording</li>
-                            <li>Treatment plans and follow-up</li>
-                        </ul>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `);
+        const visitsPath = path.join(__dirname, '../../public/views/visits.html');
+        res.sendFile(visitsPath);
     }
 
     /**

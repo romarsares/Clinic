@@ -19,22 +19,22 @@ router.use(authenticateToken);
 
 /**
  * @route   POST /api/v1/clinics
- * @desc    Create new clinic (SuperAdmin only)
- * @access  Private (SuperAdmin)
+ * @desc    Create new clinic (Super User only)
+ * @access  Private (Super User)
  */
 router.post('/',
-    requireRole(['SuperAdmin']),
+    requireRole(['Super User']),
     auditLog('clinic', 'create'),
     (req, res) => clinicController.createClinic(req, res)
 );
 
 /**
  * @route   GET /api/v1/clinics
- * @desc    List all clinics (SuperAdmin only)
- * @access  Private (SuperAdmin)
+ * @desc    List all clinics (Super User only)
+ * @access  Private (Super User)
  */
 router.get('/',
-    requireRole(['SuperAdmin']),
+    requireRole(['Super User']),
     auditLog('clinic', 'list'),
     (req, res) => clinicController.listClinics(req, res)
 );
@@ -45,7 +45,7 @@ router.get('/',
  * @access  Private (Owner, Admin, Staff, Doctor)
  */
 router.get('/:id',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'SuperAdmin']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Super User']),
     auditLog('clinic', 'view'),
     (req, res) => clinicController.getClinicDetails(req, res)
 );
@@ -53,21 +53,21 @@ router.get('/:id',
 /**
  * @route   PUT /api/v1/clinics/:id
  * @desc    Update clinic information
- * @access  Private (Owner, SuperAdmin)
+ * @access  Private (Owner, Super User)
  */
 router.put('/:id',
-    requireRole(['Owner', 'SuperAdmin']),
+    requireRole(['Owner', 'Super User']),
     auditLog('clinic', 'update'),
     (req, res) => clinicController.updateClinicInfo(req, res)
 );
 
 /**
  * @route   DELETE /api/v1/clinics/:id
- * @desc    Deactivate clinic (SuperAdmin only)
- * @access  Private (SuperAdmin)
+ * @desc    Deactivate clinic (Super User only)
+ * @access  Private (Super User)
  */
 router.delete('/:id',
-    requireRole(['SuperAdmin']),
+    requireRole(['Super User']),
     auditLog('clinic', 'deactivate'),
     (req, res) => clinicController.deactivateClinic(req, res)
 );
@@ -75,10 +75,10 @@ router.delete('/:id',
 /**
  * @route   GET /api/v1/clinics/:id/settings
  * @desc    Get clinic settings
- * @access  Private (Owner, Admin, SuperAdmin)
+ * @access  Private (Owner, Admin, Super User)
  */
 router.get('/:id/settings',
-    requireRole(['Owner', 'Admin', 'SuperAdmin']),
+    requireRole(['Owner', 'Admin', 'Super User']),
     auditLog('clinic_settings', 'view'),
     (req, res) => clinicController.getSettings(req, res)
 );
@@ -86,10 +86,10 @@ router.get('/:id/settings',
 /**
  * @route   POST /api/v1/clinics/:id/settings
  * @desc    Update or create clinic setting
- * @access  Private (Owner, Admin, SuperAdmin)
+ * @access  Private (Owner, Admin, Super User)
  */
 router.post('/:id/settings',
-    requireRole(['Owner', 'Admin', 'SuperAdmin']),
+    requireRole(['Owner', 'Admin', 'Super User']),
     auditLog('clinic_settings', 'create'),
     (req, res) => clinicController.updateSetting(req, res)
 );
@@ -97,10 +97,10 @@ router.post('/:id/settings',
 /**
  * @route   GET /api/v1/clinics/:id/stats
  * @desc    Get clinic statistics
- * @access  Private (Owner, Admin, SuperAdmin)
+ * @access  Private (Owner, Admin, Super User)
  */
 router.get('/:id/stats',
-    requireRole(['Owner', 'Admin', 'SuperAdmin']),
+    requireRole(['Owner', 'Admin', 'Super User', 'Doctor', 'Staff']),
     auditLog('clinic_stats', 'view'),
     (req, res) => clinicController.getStats(req, res)
 );

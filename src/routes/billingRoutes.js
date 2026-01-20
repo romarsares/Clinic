@@ -2,12 +2,14 @@ const express = require('express');
 const BillingController = require('../controllers/BillingController');
 const { authenticateToken } = require('../middleware/auth');
 const { validateTenant } = require('../middleware/tenant');
+const { requireFeature } = require('../middleware/featureToggle');
 
 const router = express.Router();
 
-// Apply authentication and tenant middleware to all routes
+// Apply authentication, tenant validation, and feature check
 router.use(authenticateToken);
 router.use(validateTenant);
+router.use(requireFeature('billing'));
 
 // Bill generation routes
 router.post('/visits/:visitId/patients/:patientId/bill', BillingController.generateVisitBill);

@@ -10,12 +10,14 @@ const express = require('express');
 const AppointmentController = require('../controllers/AppointmentController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { auditLog } = require('../middleware/audit');
+const { requireFeature } = require('../middleware/featureToggle');
 
 const router = express.Router();
 const appointmentController = new AppointmentController();
 
-// Apply authentication middleware to all routes
+// Apply authentication and feature check middleware to all routes
 router.use(authenticateToken);
+router.use(requireFeature('appointments'));
 
 /**
  * @route   GET /api/v1/appointments
@@ -23,7 +25,7 @@ router.use(authenticateToken);
  * @access  Private (All clinic staff)
  */
 router.get('/',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Super User']),
     auditLog('appointment', 'list'),
     (req, res) => appointmentController.listAppointments(req, res)
 );
@@ -34,8 +36,7 @@ router.get('/',
  * @access  Private (Staff, Admin, Owner)
  */
 router.post('/',
-    requireRole(['Owner', 'Admin', 'Staff']),
-    AppointmentController.getCreateValidation(),
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
     auditLog('appointment', 'create'),
     (req, res) => appointmentController.createAppointment(req, res)
 );
@@ -46,7 +47,7 @@ router.post('/',
  * @access  Private (All clinic staff)
  */
 router.get('/calendar',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Super User']),
     auditLog('appointment', 'calendar_view'),
     (req, res) => appointmentController.getCalendarView(req, res)
 );
@@ -57,7 +58,7 @@ router.get('/calendar',
  * @access  Private (All clinic staff)
  */
 router.get('/today',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Super User']),
     auditLog('appointment', 'today_view'),
     (req, res) => appointmentController.getTodayAppointments(req, res)
 );
@@ -78,8 +79,7 @@ router.get('/:id',
  * @access  Private (Staff, Admin, Owner)
  */
 router.put('/:id',
-    requireRole(['Owner', 'Admin', 'Staff']),
-    AppointmentController.getUpdateValidation(),
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
     auditLog('appointment', 'update'),
     (req, res) => appointmentController.updateAppointment(req, res)
 );
@@ -90,8 +90,7 @@ router.put('/:id',
  * @access  Private (Staff, Admin, Owner, Doctor)
  */
 router.put('/:id/status',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor']),
-    AppointmentController.getStatusUpdateValidation(),
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Super User']),
     auditLog('appointment', 'status_change'),
     (req, res) => appointmentController.updateAppointmentStatus(req, res)
 );
@@ -102,7 +101,7 @@ router.put('/:id/status',
  * @access  Private (Staff, Admin, Owner)
  */
 router.delete('/:id',
-    requireRole(['Owner', 'Admin', 'Staff']),
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
     auditLog('appointment', 'cancel'),
     (req, res) => appointmentController.cancelAppointment(req, res)
 );
