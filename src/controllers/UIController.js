@@ -22,7 +22,7 @@ class UIController {
      * Serve login page
      */
     static serveLogin(req, res) {
-        const loginPath = path.join(__dirname, '../../public/views/login.html');
+        const loginPath = path.join(__dirname, '../../public/views/login-nextui.html');
         res.sendFile(loginPath);
     }
 
