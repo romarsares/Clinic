@@ -31,6 +31,7 @@ const patientHistoryRoutes = require('./patientHistoryRoutes');
 const billingRoutes = require('./billingRoutes');
 const featureRoutes = require('./featureRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
+const userPermissionsRoutes = require('./userPermissionsRoutes');
 const { enforceTenantIsolation } = require('../middleware/tenant');
 
 const router = express.Router();
@@ -133,6 +134,12 @@ router.use(`${API_VERSION}/features`, featureRoutes);
  * Handles role-specific dashboard data and quick actions
  */
 router.use(`${API_VERSION}/dashboard`, dashboardRoutes);
+
+/**
+ * User Permissions Routes
+ * Handles granular permission management
+ */
+router.use(`${API_VERSION}/permissions`, userPermissionsRoutes);
 
 /**
  * Clinic Management Routes

@@ -7,6 +7,7 @@
  */
 
 const express = require('express');
+const path = require('path');
 const UIController = require('../controllers/UIController');
 
 const router = express.Router();
@@ -54,6 +55,16 @@ router.get('/dashboard/doctor', UIController.serveDoctorDashboard);
  * @access  Public
  */
 router.get('/dashboard/owner', UIController.serveOwnerDashboard);
+
+/**
+ * @route   GET /permissions
+ * @desc    Serve user permissions management page
+ * @access  Public
+ */
+router.get('/permissions', (req, res) => {
+    const permissionsPath = path.join(__dirname, '../../public/views/user-permissions.html');
+    res.sendFile(permissionsPath);
+});
 
 /**
  * @route   GET /patients
