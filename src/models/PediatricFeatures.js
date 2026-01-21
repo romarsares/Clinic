@@ -1,272 +1,338 @@
-const TenantDB = require('../middleware/tenant');
+const db = require('../config/database');
 
 class PediatricFeatures {
-  static async getGrowthChartData(tenantId, patientId) {
-    const db = TenantDB.getConnection(tenantId);
-    const [growthData] = await db.execute(
-      `SELECT vs.weight, vs.height, v.visit_date,
-       TIMESTAMPDIFF(MONTH, p.date_of_birth, v.visit_date) as age_months,
-       TIMESTAMPDIFF(YEAR, p.date_of_birth, v.visit_date) as age_years
-       FROM visit_vital_signs vs
-       JOIN visits v ON vs.visit_id = v.id
-       JOIN patients p ON v.patient_id = p.id
-       WHERE v.patient_id = ? AND v.tenant_id = ?
-       AND vs.weight IS NOT NULL AND vs.height IS NOT NULL
-       ORDER BY v.visit_date ASC`,
-      [patientId, tenantId]
-    );
-
-    return growthData.map(record => ({
-      ...record,
-      weight_percentile: this.calculateWeightPercentile(record.age_months, record.weight),
-      height_percentile: this.calculateHeightPercentile(record.age_months, record.height),
-      bmi: this.calculateBMI(record.weight, record.height),
-      who_standards: this.getWHOStandards(record.age_months)
-    }));
-  }
-
-  static calculateBMI(weight, height) {
-    if (!weight || !height) return null;
-    const heightInMeters = height / 100;
-    return Math.round((weight / (heightInMeters * heightInMeters)) * 10) / 10;
-  }
-
-  static calculateWeightPercentile(ageMonths, weight) {
-    // Simplified percentile calculation - in production would use WHO growth charts
-    const standards = this.getWHOStandards(ageMonths);
-    if (!standards.weight) return null;
-
-    if (weight < standards.weight.p3) return 3;
-    if (weight < standards.weight.p10) return 10;
-    if (weight < standards.weight.p25) return 25;
-    if (weight < standards.weight.p50) return 50;
-    if (weight < standards.weight.p75) return 75;
-    if (weight < standards.weight.p90) return 90;
-    if (weight < standards.weight.p97) return 97;
-    return 97;
-  }
-
-  static calculateHeightPercentile(ageMonths, height) {
-    // Simplified percentile calculation - in production would use WHO growth charts
-    const standards = this.getWHOStandards(ageMonths);
-    if (!standards.height) return null;
-
-    if (height < standards.height.p3) return 3;
-    if (height < standards.height.p10) return 10;
-    if (height < standards.height.p25) return 25;
-    if (height < standards.height.p50) return 50;
-    if (height < standards.height.p75) return 75;
-    if (height < standards.height.p90) return 90;
-    if (height < standards.height.p97) return 97;
-    return 97;
-  }
-
-  static getWHOStandards(ageMonths) {
-    // Simplified WHO standards - in production would use complete WHO tables
-    const standards = {
-      6: { weight: { p3: 6.0, p10: 6.5, p25: 7.1, p50: 7.9, p75: 8.8, p90: 9.8, p97: 10.9 }, 
-           height: { p3: 63.3, p10: 64.4, p25: 65.7, p50: 67.6, p75: 69.8, p90: 72.2, p97: 74.5 } },
-      12: { weight: { p3: 7.7, p10: 8.4, p25: 9.2, p50: 10.2, p75: 11.3, p90: 12.8, p97: 14.5 }, 
-            height: { p3: 71.0, p10: 72.2, p25: 73.7, p50: 75.7, p75: 78.0, p90: 80.5, p97: 83.2 } },
-      24: { weight: { p3: 9.7, p10: 10.5, p25: 11.5, p50: 12.9, p75: 14.8, p90: 17.0, p97: 19.6 }, 
-            height: { p3: 82.3, p10: 83.5, p25: 85.1, p50: 87.1, p75: 89.2, p90: 91.9, p97: 95.0 } }
-    };
-
-    // Find closest age match
-    const ages = Object.keys(standards).map(Number).sort((a, b) => a - b);
-    const closestAge = ages.reduce((prev, curr) => 
-      Math.abs(curr - ageMonths) < Math.abs(prev - ageMonths) ? curr : prev
-    );
-
-    return standards[closestAge] || standards[24];
-  }
-
-  static async trackDevelopmentalMilestones(tenantId, patientId) {
-    const db = TenantDB.getConnection(tenantId);
-    
-    // Get patient age
-    const [patient] = await db.execute(
-      'SELECT date_of_birth FROM patients WHERE id = ? AND tenant_id = ?',
-      [patientId, tenantId]
-    );
-
-    if (!patient[0]) return null;
-
-    const ageMonths = Math.floor((new Date() - new Date(patient[0].date_of_birth)) / (1000 * 60 * 60 * 24 * 30.44));
-    
-    // Get recorded milestones
-    const [milestones] = await db.execute(
-      `SELECT * FROM patient_milestones 
-       WHERE patient_id = ? AND tenant_id = ?
-       ORDER BY recorded_date DESC`,
-      [patientId, tenantId]
-    );
-
-    const expectedMilestones = this.getExpectedMilestones(ageMonths);
-    
+  // WHO Growth Standards - percentile calculations
+  static getWHOPercentiles() {
+    // Simplified WHO percentiles for demonstration
     return {
-      patient_age_months: ageMonths,
-      recorded_milestones: milestones,
-      expected_milestones: expectedMilestones,
-      milestone_compliance: this.assessMilestoneCompliance(milestones, expectedMilestones)
-    };
-  }
-
-  static getExpectedMilestones(ageMonths) {
-    const milestones = {
-      2: ['Smiles socially', 'Follows objects with eyes', 'Holds head up briefly'],
-      4: ['Laughs', 'Holds head steady', 'Brings hands to mouth'],
-      6: ['Sits with support', 'Rolls over', 'Babbles'],
-      9: ['Sits without support', 'Crawls', 'Says mama/dada'],
-      12: ['Walks with assistance', 'Says first words', 'Waves bye-bye'],
-      18: ['Walks independently', 'Says 10+ words', 'Follows simple commands'],
-      24: ['Runs', 'Says 2-word phrases', 'Plays alongside other children'],
-      36: ['Pedals tricycle', 'Speaks in sentences', 'Toilet training begins']
-    };
-
-    const applicableMilestones = [];
-    for (const [age, items] of Object.entries(milestones)) {
-      if (ageMonths >= parseInt(age)) {
-        applicableMilestones.push({ age_months: parseInt(age), milestones: items });
-      }
-    }
-
-    return applicableMilestones;
-  }
-
-  static assessMilestoneCompliance(recordedMilestones, expectedMilestones) {
-    const compliance = {};
-    
-    for (const expected of expectedMilestones) {
-      const ageGroup = expected.age_months;
-      compliance[ageGroup] = {
-        expected: expected.milestones,
-        achieved: [],
-        missing: [],
-        compliance_percentage: 0
-      };
-
-      for (const milestone of expected.milestones) {
-        const achieved = recordedMilestones.find(rm => 
-          rm.milestone_description.toLowerCase().includes(milestone.toLowerCase())
-        );
-        
-        if (achieved) {
-          compliance[ageGroup].achieved.push(milestone);
-        } else {
-          compliance[ageGroup].missing.push(milestone);
+      weight: {
+        male: {
+          0: { p3: 2.5, p15: 2.9, p50: 3.3, p85: 3.9, p97: 4.4 },
+          6: { p3: 6.4, p15: 7.1, p50: 7.9, p85: 8.9, p97: 9.8 },
+          12: { p3: 8.4, p15: 9.4, p50: 10.5, p85: 11.8, p97: 13.0 },
+          24: { p3: 10.5, p15: 11.8, p50: 13.2, p85: 14.8, p97: 16.5 }
+        },
+        female: {
+          0: { p3: 2.4, p15: 2.8, p50: 3.2, p85: 3.7, p97: 4.2 },
+          6: { p3: 5.9, p15: 6.5, p50: 7.3, p85: 8.2, p97: 9.0 },
+          12: { p3: 7.8, p15: 8.7, p50: 9.8, p85: 11.0, p97: 12.1 },
+          24: { p3: 9.9, p15: 11.0, p50: 12.4, p85: 13.9, p97: 15.4 }
+        }
+      },
+      height: {
+        male: {
+          0: { p3: 46.1, p15: 48.0, p50: 49.9, p85: 51.8, p97: 53.7 },
+          6: { p3: 63.3, p15: 65.5, p50: 67.6, p85: 69.8, p97: 71.9 },
+          12: { p3: 71.0, p15: 73.4, p50: 75.7, p85: 78.1, p97: 80.5 },
+          24: { p3: 78.0, p15: 81.0, p50: 84.1, p85: 87.1, p97: 90.2 }
+        },
+        female: {
+          0: { p3: 45.4, p15: 47.3, p50: 49.1, p85: 51.0, p97: 52.9 },
+          6: { p3: 61.8, p15: 64.0, p50: 66.2, p85: 68.3, p97: 70.5 },
+          12: { p3: 69.2, p15: 71.7, p50: 74.0, p85: 76.4, p97: 78.7 },
+          24: { p3: 76.0, p15: 79.3, p50: 82.5, p85: 85.7, p97: 88.9 }
         }
       }
-
-      compliance[ageGroup].compliance_percentage = Math.round(
-        (compliance[ageGroup].achieved.length / expected.milestones.length) * 100
-      );
-    }
-
-    return compliance;
+    };
   }
 
-  static async getVaccineScheduleCompliance(tenantId, patientId) {
-    const db = TenantDB.getConnection(tenantId);
+  // Calculate percentile for a given measurement
+  static calculatePercentile(value, ageMonths, gender, measurementType) {
+    const standards = this.getWHOPercentiles();
+    const ageKey = Math.floor(ageMonths / 6) * 6; // Round to nearest 6 months
     
-    // Get patient info
-    const [patient] = await db.execute(
-      'SELECT date_of_birth FROM patients WHERE id = ? AND tenant_id = ?',
-      [patientId, tenantId]
-    );
+    if (!standards[measurementType] || !standards[measurementType][gender] || !standards[measurementType][gender][ageKey]) {
+      return null;
+    }
+    
+    const percentiles = standards[measurementType][gender][ageKey];
+    
+    if (value <= percentiles.p3) return 3;
+    if (value <= percentiles.p15) return 15;
+    if (value <= percentiles.p50) return 50;
+    if (value <= percentiles.p85) return 85;
+    if (value <= percentiles.p97) return 97;
+    return 97;
+  }
 
-    if (!patient[0]) return null;
+  // Get growth chart data with percentiles
+  static async getGrowthChartData(clinicId, patientId) {
+    const [patient] = await db.execute(`
+      SELECT birth_date, gender FROM patients WHERE id = ? AND clinic_id = ?
+    `, [patientId, clinicId]);
+
+    if (!patient[0]) {
+      throw new Error('Patient not found');
+    }
+
+    const [growthData] = await db.execute(`
+      SELECT vs.weight, vs.height, vs.bmi, v.visit_date,
+             TIMESTAMPDIFF(MONTH, p.birth_date, v.visit_date) as age_months
+      FROM visit_vital_signs vs
+      JOIN visits v ON vs.visit_id = v.id
+      JOIN patients p ON v.patient_id = p.id
+      WHERE v.patient_id = ? AND v.clinic_id = ?
+      AND (vs.weight IS NOT NULL OR vs.height IS NOT NULL)
+      ORDER BY v.visit_date ASC
+    `, [patientId, clinicId]);
+
+    const processedData = growthData.map(point => {
+      const weightPercentile = point.weight ? 
+        this.calculatePercentile(point.weight, point.age_months, patient[0].gender, 'weight') : null;
+      const heightPercentile = point.height ? 
+        this.calculatePercentile(point.height, point.age_months, patient[0].gender, 'height') : null;
+
+      return {
+        ...point,
+        weight_percentile: weightPercentile,
+        height_percentile: heightPercentile,
+        growth_concerns: this.identifyGrowthConcerns(weightPercentile, heightPercentile)
+      };
+    });
+
+    return {
+      patient_info: patient[0],
+      growth_data: processedData,
+      growth_velocity: this.calculateGrowthVelocity(processedData)
+    };
+  }
+
+  // Identify growth concerns
+  static identifyGrowthConcerns(weightPercentile, heightPercentile) {
+    const concerns = [];
+    
+    if (weightPercentile && weightPercentile < 3) {
+      concerns.push('Underweight - below 3rd percentile');
+    }
+    if (weightPercentile && weightPercentile > 97) {
+      concerns.push('Overweight - above 97th percentile');
+    }
+    if (heightPercentile && heightPercentile < 3) {
+      concerns.push('Short stature - below 3rd percentile');
+    }
+    if (weightPercentile && heightPercentile && Math.abs(weightPercentile - heightPercentile) > 50) {
+      concerns.push('Weight-height disproportion');
+    }
+    
+    return concerns;
+  }
+
+  // Calculate growth velocity
+  static calculateGrowthVelocity(growthData) {
+    if (growthData.length < 2) return null;
+
+    const velocities = [];
+    for (let i = 1; i < growthData.length; i++) {
+      const current = growthData[i];
+      const previous = growthData[i - 1];
+      
+      const monthsDiff = current.age_months - previous.age_months;
+      if (monthsDiff > 0) {
+        const weightVelocity = current.weight && previous.weight ? 
+          (current.weight - previous.weight) / monthsDiff * 12 : null; // kg/year
+        const heightVelocity = current.height && previous.height ? 
+          (current.height - previous.height) / monthsDiff * 12 : null; // cm/year
+
+        velocities.push({
+          period: `${previous.age_months}-${current.age_months} months`,
+          weight_velocity: weightVelocity,
+          height_velocity: heightVelocity,
+          months_duration: monthsDiff
+        });
+      }
+    }
+
+    return velocities;
+  }
+
+  // Developmental milestones database
+  static getDevelopmentalMilestones() {
+    return [
+      // 0-6 months
+      { age_months: 2, category: 'motor', milestone: 'Lifts head when on tummy', type: 'gross_motor' },
+      { age_months: 4, category: 'motor', milestone: 'Holds head steady', type: 'gross_motor' },
+      { age_months: 6, category: 'motor', milestone: 'Sits without support', type: 'gross_motor' },
+      { age_months: 3, category: 'social', milestone: 'Smiles at people', type: 'social_emotional' },
+      { age_months: 6, category: 'language', milestone: 'Babbles', type: 'language' },
+      
+      // 6-12 months
+      { age_months: 8, category: 'motor', milestone: 'Crawls', type: 'gross_motor' },
+      { age_months: 9, category: 'motor', milestone: 'Pulls to stand', type: 'gross_motor' },
+      { age_months: 12, category: 'motor', milestone: 'Walks alone', type: 'gross_motor' },
+      { age_months: 9, category: 'motor', milestone: 'Pincer grasp', type: 'fine_motor' },
+      { age_months: 12, category: 'language', milestone: 'Says first words', type: 'language' },
+      
+      // 12-24 months
+      { age_months: 15, category: 'motor', milestone: 'Walks well', type: 'gross_motor' },
+      { age_months: 18, category: 'motor', milestone: 'Runs', type: 'gross_motor' },
+      { age_months: 24, category: 'motor', milestone: 'Jumps with both feet', type: 'gross_motor' },
+      { age_months: 18, category: 'language', milestone: 'Says 10-20 words', type: 'language' },
+      { age_months: 24, category: 'language', milestone: 'Two-word phrases', type: 'language' },
+      
+      // 24-36 months
+      { age_months: 30, category: 'motor', milestone: 'Pedals tricycle', type: 'gross_motor' },
+      { age_months: 36, category: 'motor', milestone: 'Balances on one foot', type: 'gross_motor' },
+      { age_months: 36, category: 'language', milestone: 'Speaks in sentences', type: 'language' },
+      { age_months: 36, category: 'social', milestone: 'Plays with other children', type: 'social_emotional' }
+    ];
+  }
+
+  // Track developmental milestones for a patient
+  static async trackDevelopmentalMilestones(clinicId, patientId) {
+    const [patient] = await db.execute(`
+      SELECT birth_date, gender FROM patients WHERE id = ? AND clinic_id = ?
+    `, [patientId, clinicId]);
+
+    if (!patient[0]) {
+      throw new Error('Patient not found');
+    }
+
+    const currentAgeMonths = Math.floor((new Date() - new Date(patient[0].birth_date)) / (1000 * 60 * 60 * 24 * 30.44));
+    const milestones = this.getDevelopmentalMilestones();
+
+    // Get recorded milestone achievements
+    const [achievements] = await db.execute(`
+      SELECT * FROM patient_milestones WHERE patient_id = ? AND clinic_id = ?
+    `, [patientId, clinicId]);
+
+    const achievementMap = {};
+    achievements.forEach(a => {
+      achievementMap[a.milestone_description] = a;
+    });
+
+    const milestoneStatus = milestones.map(milestone => {
+      const isExpected = currentAgeMonths >= milestone.age_months;
+      const achievement = achievementMap[milestone.milestone];
+      
+      return {
+        ...milestone,
+        is_expected: isExpected,
+        is_achieved: !!achievement,
+        achieved_date: achievement?.achieved_date || null,
+        is_delayed: isExpected && !achievement && currentAgeMonths > (milestone.age_months + 3),
+        status: achievement ? 'achieved' : (isExpected ? (currentAgeMonths > milestone.age_months + 3 ? 'delayed' : 'due') : 'upcoming')
+      };
+    });
+
+    return {
+      patient_age_months: currentAgeMonths,
+      milestones: milestoneStatus,
+      summary: {
+        total_expected: milestoneStatus.filter(m => m.is_expected).length,
+        total_achieved: milestoneStatus.filter(m => m.is_achieved).length,
+        total_delayed: milestoneStatus.filter(m => m.is_delayed).length
+      }
+    };
+  }
+
+  // Get vaccine schedule compliance (enhanced from existing VaccineRecord)
+  static async getVaccineScheduleCompliance(clinicId, patientId) {
+    const [patient] = await db.execute(`
+      SELECT birth_date, gender FROM patients WHERE id = ? AND clinic_id = ?
+    `, [patientId, clinicId]);
+
+    if (!patient[0]) {
+      throw new Error('Patient not found');
+    }
+
+    const currentAgeMonths = Math.floor((new Date() - new Date(patient[0].birth_date)) / (1000 * 60 * 60 * 24 * 30.44));
 
     // Get administered vaccines
-    const [vaccines] = await db.execute(
-      `SELECT * FROM patient_vaccines 
-       WHERE patient_id = ? AND tenant_id = ?
-       ORDER BY administered_date DESC`,
-      [patientId, tenantId]
-    );
+    const [vaccines] = await db.execute(`
+      SELECT * FROM patient_vaccines 
+      WHERE patient_id = ? AND clinic_id = ?
+      ORDER BY administered_date
+    `, [patientId, clinicId]);
 
-    const ageMonths = Math.floor((new Date() - new Date(patient[0].date_of_birth)) / (1000 * 60 * 60 * 24 * 30.44));
-    const schedule = this.getVaccineSchedule();
-    const compliance = {};
+    // Standard schedule (simplified)
+    const schedule = [
+      { vaccine_name: 'BCG', dose_number: 1, age_months: 0, description: 'Birth' },
+      { vaccine_name: 'Hepatitis B', dose_number: 1, age_months: 0, description: 'Birth' },
+      { vaccine_name: 'DPT', dose_number: 1, age_months: 2, description: '6 weeks' },
+      { vaccine_name: 'OPV', dose_number: 1, age_months: 2, description: '6 weeks' },
+      { vaccine_name: 'DPT', dose_number: 2, age_months: 4, description: '10 weeks' },
+      { vaccine_name: 'OPV', dose_number: 2, age_months: 4, description: '10 weeks' },
+      { vaccine_name: 'DPT', dose_number: 3, age_months: 6, description: '14 weeks' },
+      { vaccine_name: 'OPV', dose_number: 3, age_months: 6, description: '14 weeks' },
+      { vaccine_name: 'Measles', dose_number: 1, age_months: 9, description: '9 months' },
+      { vaccine_name: 'MMR', dose_number: 1, age_months: 12, description: '12 months' }
+    ];
 
-    for (const [ageGroup, requiredVaccines] of Object.entries(schedule)) {
-      const ageInMonths = this.parseAgeGroup(ageGroup);
-      compliance[ageGroup] = {
-        age_months: ageInMonths,
-        required: requiredVaccines,
-        administered: [],
-        missing: [],
-        overdue: ageMonths > ageInMonths + 2, // 2 month grace period
-        age_appropriate: ageMonths >= ageInMonths
+    const compliance = schedule.map(scheduleItem => {
+      const administered = vaccines.find(v => 
+        v.vaccine_name === scheduleItem.vaccine_name && 
+        (v.dose_number === scheduleItem.dose_number || !v.dose_number)
+      );
+
+      const isDue = currentAgeMonths >= scheduleItem.age_months;
+      const isOverdue = currentAgeMonths > (scheduleItem.age_months + 2);
+
+      return {
+        ...scheduleItem,
+        administered: !!administered,
+        administered_date: administered?.administered_date || null,
+        is_due: isDue,
+        is_overdue: isOverdue && !administered,
+        status: administered ? 'completed' : (isOverdue ? 'overdue' : (isDue ? 'due' : 'upcoming'))
       };
-
-      for (const vaccine of requiredVaccines) {
-        const administered = vaccines.find(v => v.vaccine_name === vaccine);
-        if (administered) {
-          compliance[ageGroup].administered.push({
-            vaccine: vaccine,
-            date: administered.administered_date,
-            on_time: new Date(administered.administered_date) <= new Date(patient[0].date_of_birth).setMonth(new Date(patient[0].date_of_birth).getMonth() + ageInMonths + 2)
-          });
-        } else if (compliance[ageGroup].age_appropriate) {
-          compliance[ageGroup].missing.push(vaccine);
-        }
-      }
-    }
+    });
 
     return {
-      patient_age_months: ageMonths,
-      compliance_summary: compliance,
-      overall_compliance: this.calculateOverallVaccineCompliance(compliance)
+      patient_age_months: currentAgeMonths,
+      compliance_rate: (compliance.filter(c => c.administered).length / compliance.filter(c => c.is_due).length) * 100 || 0,
+      schedule: compliance,
+      overdue_vaccines: compliance.filter(c => c.is_overdue)
     };
   }
 
-  static getVaccineSchedule() {
-    return {
-      'Birth': ['Hepatitis B'],
-      '2 months': ['DTaP', 'IPV', 'Hib', 'PCV13', 'Rotavirus'],
-      '4 months': ['DTaP', 'IPV', 'Hib', 'PCV13', 'Rotavirus'],
-      '6 months': ['DTaP', 'Hib', 'PCV13', 'Rotavirus', 'Hepatitis B'],
-      '12-15 months': ['MMR', 'PCV13', 'Hib', 'Varicella'],
-      '15-18 months': ['DTaP'],
-      '4-6 years': ['DTaP', 'IPV', 'MMR', 'Varicella'],
-      '11-12 years': ['Tdap', 'HPV', 'Meningococcal']
-    };
-  }
-
-  static parseAgeGroup(ageGroup) {
-    if (ageGroup === 'Birth') return 0;
-    if (ageGroup.includes('months')) return parseInt(ageGroup);
-    if (ageGroup.includes('years')) return parseInt(ageGroup) * 12;
-    if (ageGroup.includes('-')) {
-      const range = ageGroup.split('-');
-      if (range[1].includes('months')) return parseInt(range[0]);
-      if (range[1].includes('years')) return parseInt(range[0]) * 12;
-    }
-    return 0;
-  }
-
-  static calculateOverallVaccineCompliance(compliance) {
-    let totalRequired = 0;
-    let totalAdministered = 0;
-    let totalOverdue = 0;
-
-    for (const [ageGroup, data] of Object.entries(compliance)) {
-      if (data.age_appropriate) {
-        totalRequired += data.required.length;
-        totalAdministered += data.administered.length;
-        if (data.overdue && data.missing.length > 0) {
-          totalOverdue += data.missing.length;
-        }
+  // Pediatric analytics dashboard
+  static async getPediatricAnalytics(clinicId, dateFrom, dateTo) {
+    let dateFilter = '';
+    const params = [clinicId];
+    
+    if (dateFrom || dateTo) {
+      if (dateFrom) {
+        dateFilter += ' AND v.visit_date >= ?';
+        params.push(dateFrom);
+      }
+      if (dateTo) {
+        dateFilter += ' AND v.visit_date <= ?';
+        params.push(dateTo);
       }
     }
 
+    // Get pediatric patient statistics
+    const [pediatricStats] = await db.execute(`
+      SELECT 
+        COUNT(DISTINCT p.id) as total_pediatric_patients,
+        COUNT(DISTINCT CASE WHEN TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) < 2 THEN p.id END) as infants,
+        COUNT(DISTINCT CASE WHEN TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) BETWEEN 2 AND 5 THEN p.id END) as toddlers,
+        COUNT(DISTINCT CASE WHEN TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) BETWEEN 6 AND 12 THEN p.id END) as school_age,
+        COUNT(DISTINCT CASE WHEN TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) BETWEEN 13 AND 17 THEN p.id END) as adolescents
+      FROM patients p
+      LEFT JOIN visits v ON p.id = v.patient_id ${dateFilter}
+      WHERE p.clinic_id = ? AND TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) < 18
+    `, params);
+
+    // Get common pediatric diagnoses
+    const [pediatricDiagnoses] = await db.execute(`
+      SELECT 
+        vd.diagnosis_name,
+        COUNT(*) as frequency,
+        COUNT(DISTINCT p.id) as unique_patients
+      FROM visit_diagnoses vd
+      JOIN visits v ON vd.visit_id = v.id
+      JOIN patients p ON v.patient_id = p.id
+      WHERE v.clinic_id = ? AND TIMESTAMPDIFF(YEAR, p.birth_date, v.visit_date) < 18 ${dateFilter}
+      GROUP BY vd.diagnosis_name
+      ORDER BY frequency DESC
+      LIMIT 10
+    `, params);
+
     return {
-      compliance_percentage: totalRequired > 0 ? Math.round((totalAdministered / totalRequired) * 100) : 100,
-      total_required: totalRequired,
-      total_administered: totalAdministered,
-      total_overdue: totalOverdue,
-      status: totalOverdue > 0 ? 'OVERDUE' : totalAdministered === totalRequired ? 'COMPLIANT' : 'PARTIAL'
+      patient_demographics: pediatricStats[0],
+      common_diagnoses: pediatricDiagnoses,
+      date_range: { from: dateFrom, to: dateTo }
     };
   }
 }

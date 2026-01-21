@@ -2,6 +2,8 @@ const PatientHistory = require('../models/PatientHistory');
 const VaccineRecord = require('../models/VaccineRecord');
 const SearchFilter = require('../models/SearchFilter');
 const ReportExport = require('../models/ReportExport');
+const ClinicalReports = require('../models/ClinicalReports');
+const PediatricFeatures = require('../models/PediatricFeatures');
 const AuditService = require('../services/AuditService');
 const Joi = require('joi');
 
@@ -320,6 +322,48 @@ class PatientHistoryController {
     }
   }
 
+  // Get pediatric growth chart
+  static async getPediatricGrowthChart(req, res) {
+    try {
+      const growthData = await PediatricFeatures.getGrowthChartData(req.user.clinic_id, req.params.patientId);
+      
+      await AuditService.logAction(req.user.clinic_id, req.user.id, 'view', 'pediatric_growth_chart', req.params.patientId);
+      
+      res.json(growthData);
+    } catch (error) {
+      console.error('Get pediatric growth chart error:', error);
+      res.status(500).json({ error: 'Failed to retrieve pediatric growth chart' });
+    }
+  }
+
+  // Get developmental milestones
+  static async getDevelopmentalMilestones(req, res) {
+    try {
+      const milestones = await PediatricFeatures.trackDevelopmentalMilestones(req.user.clinic_id, req.params.patientId);
+      
+      await AuditService.logAction(req.user.clinic_id, req.user.id, 'view', 'developmental_milestones', req.params.patientId);
+      
+      res.json(milestones);
+    } catch (error) {
+      console.error('Get developmental milestones error:', error);
+      res.status(500).json({ error: 'Failed to retrieve developmental milestones' });
+    }
+  }
+
+  // Get enhanced vaccine compliance
+  static async getEnhancedVaccineCompliance(req, res) {
+    try {
+      const compliance = await PediatricFeatures.getVaccineScheduleCompliance(req.user.clinic_id, req.params.patientId);
+      
+      await AuditService.logAction(req.user.clinic_id, req.user.id, 'view', 'vaccine_schedule_compliance', req.params.patientId);
+      
+      res.json(compliance);
+    } catch (error) {
+      console.error('Get enhanced vaccine compliance error:', error);
+      res.status(500).json({ error: 'Failed to retrieve vaccine compliance' });
+    }
+  }
+
   // Advanced search
   static async advancedSearch(req, res) {
     try {
@@ -499,6 +543,81 @@ class PatientHistoryController {
     } catch (error) {
       console.error('Generate batch reports error:', error);
       res.status(500).json({ error: 'Failed to generate batch reports' });
+    }
+  }
+
+  // Get clinical reports
+  static async getClinicalReports(req, res) {
+    try {
+      const reportType = req.params.type;
+      const dateFrom = req.query.date_from;
+      const dateTo = req.query.date_to;
+      const category = req.query.category;
+      const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+
+      let report;
+      switch (reportType) {
+        case 'common-diagnoses':
+          report = await ClinicalReports.getCommonDiagnoses(req.user.clinic_id, dateFrom, dateTo, limit);
+          break;
+        case 'diagnosis-frequency':
+          report = await ClinicalReports.getDiagnosisFrequencyAnalysis(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'seasonal-trends':
+          const year = req.query.year || new Date().getFullYear();
+          report = await ClinicalReports.getSeasonalDiagnosisTrends(req.user.clinic_id, year);
+          break;
+        case 'disease-prevalence':
+          report = await ClinicalReports.getDiseasePrevalence(req.user.clinic_id, category);
+          break;
+        case 'chronic-disease':
+          report = await ClinicalReports.getChronicDiseaseTracking(req.user.clinic_id);
+          break;
+        case 'lab-volumes':
+          report = await ClinicalReports.getLabTestVolumes(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'lab-revenue':
+          report = await ClinicalReports.getLabRevenue(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'lab-turnaround':
+          report = await ClinicalReports.getLabTurnaroundAnalysis(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'clinic-overview':
+          report = await ClinicalReports.getClinicOverview(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'doctor-productivity':
+          report = await ClinicalReports.getDoctorProductivity(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'appointment-efficiency':
+          report = await ClinicalReports.getAppointmentEfficiency(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'documentation-completeness':
+          report = await ClinicalReports.getDocumentationCompleteness(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'followup-compliance':
+          report = await ClinicalReports.getFollowUpCompliance(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'quality-indicators':
+          report = await ClinicalReports.getClinicalQualityIndicators(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        case 'pediatric-analytics':
+          report = await PediatricFeatures.getPediatricAnalytics(req.user.clinic_id, dateFrom, dateTo);
+          break;
+        default:
+          return res.status(400).json({ error: 'Invalid report type' });
+      }
+
+      await AuditService.logAction(req.user.clinic_id, req.user.id, 'view', 'clinical_report', null, {
+        report_type: reportType,
+        date_from: dateFrom,
+        date_to: dateTo,
+        results_count: Array.isArray(report) ? report.length : 1
+      });
+
+      res.json(report);
+    } catch (error) {
+      console.error('Get clinical reports error:', error);
+      res.status(500).json({ error: 'Failed to generate clinical report' });
     }
   }
 }

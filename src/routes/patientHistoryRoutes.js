@@ -36,4 +36,12 @@ router.get('/patients/:patientId/vaccines', requireRole(['Doctor', 'Staff']), Pa
 router.get('/patients/:patientId/vaccines/compliance', requireRole(['Doctor', 'Staff']), PatientHistoryController.getVaccineCompliance);
 router.post('/patients/:patientId/vaccines', requireRole(['Doctor', 'Staff']), PatientHistoryController.addVaccineRecord);
 
+// Clinical reports routes
+router.get('/reports/clinical/:type', requireRole(['Doctor', 'Staff']), PatientHistoryController.getClinicalReports);
+
+// Pediatric routes
+router.get('/patients/:patientId/pediatric/growth-chart', requireRole(['Doctor', 'Staff']), PatientHistoryController.getPediatricGrowthChart);
+router.get('/patients/:patientId/pediatric/milestones', requireRole(['Doctor', 'Staff']), PatientHistoryController.getDevelopmentalMilestones);
+router.get('/patients/:patientId/pediatric/vaccine-compliance', requireRole(['Doctor', 'Staff']), PatientHistoryController.getEnhancedVaccineCompliance);
+
 module.exports = router;
