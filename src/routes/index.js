@@ -30,6 +30,7 @@ const labRoutes = require('./labRoutes');
 const patientHistoryRoutes = require('./patientHistoryRoutes');
 const billingRoutes = require('./billingRoutes');
 const featureRoutes = require('./featureRoutes');
+const dashboardRoutes = require('./dashboardRoutes');
 const { enforceTenantIsolation } = require('../middleware/tenant');
 
 const router = express.Router();
@@ -126,6 +127,12 @@ router.use(`${API_VERSION}/billing`, enforceTenantIsolation, billingRoutes);
  * Handles Super User feature toggle controls
  */
 router.use(`${API_VERSION}/features`, featureRoutes);
+
+/**
+ * Dashboard Routes
+ * Handles role-specific dashboard data and quick actions
+ */
+router.use(`${API_VERSION}/dashboard`, dashboardRoutes);
 
 /**
  * Clinic Management Routes

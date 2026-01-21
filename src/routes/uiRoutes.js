@@ -35,6 +35,27 @@ router.get('/login', UIController.serveLogin);
 router.get('/dashboard', UIController.serveDashboard);
 
 /**
+ * @route   GET /dashboard/staff
+ * @desc    Serve staff dashboard
+ * @access  Public
+ */
+router.get('/dashboard/staff', UIController.serveStaffDashboard);
+
+/**
+ * @route   GET /dashboard/doctor
+ * @desc    Serve doctor dashboard
+ * @access  Public
+ */
+router.get('/dashboard/doctor', UIController.serveDoctorDashboard);
+
+/**
+ * @route   GET /dashboard/owner
+ * @desc    Serve owner dashboard
+ * @access  Public
+ */
+router.get('/dashboard/owner', UIController.serveOwnerDashboard);
+
+/**
  * @route   GET /patients
  * @desc    Serve patients page placeholder
  * @access  Public

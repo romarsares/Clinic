@@ -11,10 +11,35 @@ const fs = require('fs');
 
 class UIController {
     /**
-     * Serve dashboard page
+     * Serve dashboard page based on user role
      */
     static serveDashboard(req, res) {
+        // For now, serve the main dashboard - role detection will be handled by JavaScript
         const dashboardPath = path.join(__dirname, '../../public/views/dashboard-nextui-exact.html');
+        res.sendFile(dashboardPath);
+    }
+
+    /**
+     * Serve staff-specific dashboard
+     */
+    static serveStaffDashboard(req, res) {
+        const dashboardPath = path.join(__dirname, '../../public/views/staff-dashboard.html');
+        res.sendFile(dashboardPath);
+    }
+
+    /**
+     * Serve doctor-specific dashboard
+     */
+    static serveDoctorDashboard(req, res) {
+        const dashboardPath = path.join(__dirname, '../../public/views/doctor-dashboard.html');
+        res.sendFile(dashboardPath);
+    }
+
+    /**
+     * Serve owner-specific dashboard
+     */
+    static serveOwnerDashboard(req, res) {
+        const dashboardPath = path.join(__dirname, '../../public/views/owner-dashboard.html');
         res.sendFile(dashboardPath);
     }
 
