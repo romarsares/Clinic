@@ -78,6 +78,7 @@ app.use(compression());
 
 // Serve static files
 app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
 
 // Request logging middleware
 app.use((req, res, next) => {

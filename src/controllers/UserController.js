@@ -2,6 +2,8 @@ const db = require('../config/database');
 const bcrypt = require('bcryptjs');
 const AuditService = require('../services/AuditService');
 const { body, validationResult } = require('express-validator');
+const fs = require('fs');
+const path = require('path');
 
 class UserController {
     /**
@@ -479,6 +481,177 @@ class UserController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to change password',
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Upload user avatar
+     */
+    async uploadAvatar(req, res) {
+        try {
+            const userId = parseInt(req.params.id);
+            const clinicId = req.user.clinic_id;
+
+            // Check permissions
+            if (userId !== req.user.id && !req.user.roles.includes('Owner') && !req.user.roles.includes('Admin')) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied'
+                });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No file uploaded'
+                });
+            }
+
+            // Verify user exists
+            const [users] = await db.execute(
+                'SELECT avatar_url FROM auth_users WHERE id = ? AND clinic_id = ? AND deleted_at IS NULL',
+                [userId, clinicId]
+            );
+
+            if (users.length === 0) {
+                // Clean up uploaded file if user not found
+                fs.unlinkSync(req.file.path);
+                return res.status(404).json({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+
+            // Delete old avatar if exists
+            const oldAvatarUrl = users[0].avatar_url;
+            if (oldAvatarUrl) {
+                const oldAvatarPath = path.join(__dirname, '../../uploads/avatars', path.basename(oldAvatarUrl));
+                if (fs.existsSync(oldAvatarPath)) {
+                    fs.unlinkSync(oldAvatarPath);
+                }
+            }
+
+            // Generate avatar URL
+            const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+            // Update user avatar in database
+            await db.execute(
+                'UPDATE auth_users SET avatar_url = ?, updated_at = NOW() WHERE id = ? AND clinic_id = ?',
+                [avatarUrl, userId, clinicId]
+            );
+
+            // Log avatar upload
+            await AuditService.logAction({
+                clinic_id: clinicId,
+                user_id: req.user.id,
+                action: 'avatar_upload',
+                entity: 'user',
+                entity_id: userId,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+                method: req.method,
+                url: req.originalUrl,
+                new_value: { avatar_url: avatarUrl }
+            });
+
+            res.json({
+                success: true,
+                message: 'Avatar uploaded successfully',
+                data: {
+                    avatar_url: avatarUrl
+                }
+            });
+
+        } catch (error) {
+            // Clean up uploaded file on error
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+            
+            console.error('Error uploading avatar:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to upload avatar',
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Delete user avatar
+     */
+    async deleteAvatar(req, res) {
+        try {
+            const userId = parseInt(req.params.id);
+            const clinicId = req.user.clinic_id;
+
+            // Check permissions
+            if (userId !== req.user.id && !req.user.roles.includes('Owner') && !req.user.roles.includes('Admin')) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied'
+                });
+            }
+
+            // Get current avatar
+            const [users] = await db.execute(
+                'SELECT avatar_url FROM auth_users WHERE id = ? AND clinic_id = ? AND deleted_at IS NULL',
+                [userId, clinicId]
+            );
+
+            if (users.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+
+            const avatarUrl = users[0].avatar_url;
+            if (!avatarUrl) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No avatar to delete'
+                });
+            }
+
+            // Delete avatar file
+            const avatarPath = path.join(__dirname, '../../uploads/avatars', path.basename(avatarUrl));
+            if (fs.existsSync(avatarPath)) {
+                fs.unlinkSync(avatarPath);
+            }
+
+            // Remove avatar URL from database
+            await db.execute(
+                'UPDATE auth_users SET avatar_url = NULL, updated_at = NOW() WHERE id = ? AND clinic_id = ?',
+                [userId, clinicId]
+            );
+
+            // Log avatar deletion
+            await AuditService.logAction({
+                clinic_id: clinicId,
+                user_id: req.user.id,
+                action: 'avatar_delete',
+                entity: 'user',
+                entity_id: userId,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+                method: req.method,
+                url: req.originalUrl,
+                old_value: { avatar_url: avatarUrl }
+            });
+
+            res.json({
+                success: true,
+                message: 'Avatar deleted successfully'
+            });
+
+        } catch (error) {
+            console.error('Error deleting avatar:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to delete avatar',
                 error: error.message
             });
         }

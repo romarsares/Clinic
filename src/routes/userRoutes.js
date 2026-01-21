@@ -7,9 +7,10 @@
  */
 
 const express = require('express');
-const UserController = require('../controllers/UserController');
+const UserController = require('../controllers/userController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { auditLog } = require('../middleware/audit');
+const { upload } = require('../middleware/upload');
 
 const router = express.Router();
 const userController = new UserController();
@@ -100,6 +101,27 @@ router.delete('/:id',
     requireRole(['Owner', 'SuperAdmin']),
     auditLog('user', 'delete'),
     (req, res) => userController.deleteUser(req, res)
+);
+
+/**
+ * @route   POST /api/v1/users/:id/avatar
+ * @desc    Upload user avatar
+ * @access  Private (Owner, Admin, SuperAdmin, or own profile)
+ */
+router.post('/:id/avatar',
+    upload.single('avatar'),
+    auditLog('user', 'avatar_upload'),
+    (req, res) => userController.uploadAvatar(req, res)
+);
+
+/**
+ * @route   DELETE /api/v1/users/:id/avatar
+ * @desc    Delete user avatar
+ * @access  Private (Owner, Admin, SuperAdmin, or own profile)
+ */
+router.delete('/:id/avatar',
+    auditLog('user', 'avatar_delete'),
+    (req, res) => userController.deleteAvatar(req, res)
 );
 
 module.exports = router;
