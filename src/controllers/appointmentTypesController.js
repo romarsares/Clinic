@@ -1,5 +1,4 @@
 const db = require('../config/database');
-const { logAudit } = require('../middleware/auditLogger');
 
 const appointmentTypesController = {
     // Get all appointment types for a clinic
@@ -47,8 +46,15 @@ const appointmentTypesController = {
                 [clinicId, name, description, duration_minutes, color]
             );
 
-            await logAudit(req.user.id, clinicId, 'CREATE', 'appointment_types', result.insertId, null, {
-                name, description, duration_minutes, color
+            // Log audit using AuditService
+            const AuditService = require('../services/AuditService');
+            await AuditService.logAction({
+                clinic_id: clinicId,
+                user_id: req.user.id,
+                action: 'create',
+                entity: 'appointment_type',
+                entity_id: result.insertId,
+                new_value: { name, description, duration_minutes, color }
             });
 
             res.status(201).json({
@@ -105,8 +111,16 @@ const appointmentTypesController = {
                 });
             }
 
-            await logAudit(req.user.id, clinicId, 'UPDATE', 'appointment_types', id, current[0], {
-                name, description, duration_minutes, color
+            // Log audit using AuditService
+            const AuditService = require('../services/AuditService');
+            await AuditService.logAction({
+                clinic_id: clinicId,
+                user_id: req.user.id,
+                action: 'update',
+                entity: 'appointment_type',
+                entity_id: id,
+                old_value: current[0],
+                new_value: { name, description, duration_minutes, color }
             });
 
             res.json({
@@ -159,7 +173,15 @@ const appointmentTypesController = {
                 });
             }
 
-            await logAudit(req.user.id, clinicId, 'DELETE', 'appointment_types', id);
+            // Log audit using AuditService
+            const AuditService = require('../services/AuditService');
+            await AuditService.logAction({
+                clinic_id: clinicId,
+                user_id: req.user.id,
+                action: 'delete',
+                entity: 'appointment_type',
+                entity_id: id
+            });
 
             res.json({
                 success: true,
