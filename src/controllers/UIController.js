@@ -14,7 +14,7 @@ class UIController {
      * Serve dashboard page
      */
     static serveDashboard(req, res) {
-        const dashboardPath = path.join(__dirname, '../../public/views/dashboard-clean.html');
+        const dashboardPath = path.join(__dirname, '../../public/views/dashboard-clean-nextui.html');
         res.sendFile(dashboardPath);
     }
 
@@ -22,7 +22,7 @@ class UIController {
      * Serve login page
      */
     static serveLogin(req, res) {
-        const loginPath = path.join(__dirname, '../../public/views/login-nextui.html');
+        const loginPath = path.join(__dirname, '../../public/views/login-nextui-simple.html');
         res.sendFile(loginPath);
     }
 

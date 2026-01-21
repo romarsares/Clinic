@@ -17,7 +17,7 @@ const router = express.Router();
  * @access  Public
  */
 router.get('/', (req, res) => {
-    res.redirect('/dashboard');
+    res.redirect('/login');
 });
 
 /**
