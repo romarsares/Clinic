@@ -10,6 +10,8 @@ const { body, param, query, validationResult } = require('express-validator');
 const Patient = require('../models/Patient');
 const AuditService = require('../services/AuditService');
 const db = require('../config/database');
+const fs = require('fs');
+const path = require('path');
 
 class PatientController {
     constructor() {
@@ -355,6 +357,185 @@ class PatientController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to fetch parent',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Upload patient photo
+     */
+    async uploadPhoto(req, res) {
+        try {
+            const { id } = req.params;
+            const clinicId = req.user.clinic_id;
+
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No file uploaded'
+                });
+            }
+
+            // Verify patient exists
+            const patient = await this.patientModel.getById(id);
+            if (!patient || patient.clinic_id !== clinicId) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Patient not found'
+                });
+            }
+
+            // Read file data
+            const photoData = fs.readFileSync(req.file.path);
+            const photoFilename = req.file.originalname;
+            const photoMimetype = req.file.mimetype;
+
+            // Store in database as BLOB
+            await db.execute(
+                'UPDATE patients SET photo_data = ?, photo_filename = ?, photo_mimetype = ?, updated_at = NOW() WHERE id = ? AND clinic_id = ?',
+                [photoData, photoFilename, photoMimetype, id, clinicId]
+            );
+
+            // Clean up temporary file
+            fs.unlinkSync(req.file.path);
+
+            // Log photo upload
+            await AuditService.logAction({
+                clinic_id: clinicId,
+                user_id: req.user.id,
+                action: 'patient_photo_upload',
+                entity: 'patient',
+                entity_id: id,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+                method: req.method,
+                url: req.originalUrl,
+                new_value: { photo_filename: photoFilename, photo_size: photoData.length }
+            });
+
+            res.json({
+                success: true,
+                message: 'Photo uploaded successfully',
+                data: { 
+                    photo_filename: photoFilename,
+                    photo_size: photoData.length
+                }
+            });
+
+        } catch (error) {
+            // Clean up temporary file on error
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+            
+            console.error('Error uploading photo:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to upload photo',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Get patient photo
+     */
+    async getPhoto(req, res) {
+        try {
+            const { id } = req.params;
+            const clinicId = req.user.clinic_id;
+
+            const [rows] = await db.execute(
+                'SELECT photo_data, photo_filename, photo_mimetype FROM patients WHERE id = ? AND clinic_id = ?',
+                [id, clinicId]
+            );
+
+            if (rows.length === 0 || !rows[0].photo_data) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Photo not found'
+                });
+            }
+
+            const { photo_data, photo_filename, photo_mimetype } = rows[0];
+
+            res.set({
+                'Content-Type': photo_mimetype,
+                'Content-Disposition': `inline; filename="${photo_filename}"`,
+                'Content-Length': photo_data.length
+            });
+
+            res.send(photo_data);
+
+        } catch (error) {
+            console.error('Error getting photo:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to get photo',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Delete patient photo
+     */
+    async deletePhoto(req, res) {
+        try {
+            const { id } = req.params;
+            const clinicId = req.user.clinic_id;
+
+            // Check if photo exists
+            const [rows] = await db.execute(
+                'SELECT photo_filename FROM patients WHERE id = ? AND clinic_id = ?',
+                [id, clinicId]
+            );
+
+            if (rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Patient not found'
+                });
+            }
+
+            if (!rows[0].photo_filename) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No photo to delete'
+                });
+            }
+
+            // Remove photo from database
+            await db.execute(
+                'UPDATE patients SET photo_data = NULL, photo_filename = NULL, photo_mimetype = NULL, updated_at = NOW() WHERE id = ? AND clinic_id = ?',
+                [id, clinicId]
+            );
+
+            // Log photo deletion
+            await AuditService.logAction({
+                clinic_id: clinicId,
+                user_id: req.user.id,
+                action: 'patient_photo_delete',
+                entity: 'patient',
+                entity_id: id,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+                method: req.method,
+                url: req.originalUrl,
+                old_value: { photo_filename: rows[0].photo_filename }
+            });
+
+            res.json({
+                success: true,
+                message: 'Photo deleted successfully'
+            });
+
+        } catch (error) {
+            console.error('Error deleting photo:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to delete photo',
                 error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
             });
         }

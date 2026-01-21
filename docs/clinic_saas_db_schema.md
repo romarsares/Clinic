@@ -285,6 +285,10 @@ Design Goals:
 - email
 - password_hash
 - full_name
+- avatar_url (legacy - for backward compatibility)
+- avatar_data (LONGBLOB) - **MySQL BLOB Storage Implementation**
+- avatar_filename (VARCHAR(255))
+- avatar_mimetype (VARCHAR(100))
 - status (active, suspended)
 - last_login_at
 - created_at
@@ -358,6 +362,9 @@ Design Goals:
 - contact_number
 - email
 - parent_patient_id (FK → patients, self-referencing)
+- photo_data (LONGBLOB) - **MySQL BLOB Storage Implementation**
+- photo_filename (VARCHAR(255))
+- photo_mimetype (VARCHAR(100))
 - notes
 - created_at
 - updated_at
@@ -697,3 +704,51 @@ clinic
 6. Enhanced `services` with service_type for clinical/lab categorization
 7. Enhanced `billing_items` with optional lab_request_id link
 8. Enhanced `audit_logs` with 'view' action for clinical data access tracking
+
+---
+
+# 13. MySQL BLOB Storage Implementation
+
+## Overview
+The system uses MySQL BLOB storage for file management instead of filesystem storage, providing better data integrity, simplified backups, and enhanced security.
+
+## Implementation Details
+
+### Patient Photos
+- **Storage**: `patients.photo_data` (LONGBLOB)
+- **Metadata**: `photo_filename`, `photo_mimetype`
+- **Size Limit**: 5MB maximum
+- **API Endpoint**: `GET /api/patients/:id/photo`
+- **Upload Endpoint**: `POST /api/patients/:id/photo`
+
+### User Avatars
+- **Storage**: `auth_users.avatar_data` (LONGBLOB)
+- **Metadata**: `avatar_filename`, `avatar_mimetype`
+- **Size Limit**: 5MB maximum
+- **API Endpoint**: `GET /api/users/:id/avatar`
+- **Upload Endpoint**: `POST /api/users/avatar`
+- **Legacy Support**: `avatar_url` column maintained for backward compatibility
+
+## Benefits
+1. **Data Integrity**: Files and metadata stored together atomically
+2. **Simplified Backups**: Single database backup includes all files
+3. **Enhanced Security**: Files encrypted with database encryption
+4. **No Broken Links**: No file path management issues
+5. **Easier Deployment**: No shared filesystem requirements
+6. **Better Scaling**: Database replication handles file distribution
+
+## Performance Considerations
+- File size limits prevent database bloat
+- Separate queries for file data vs metadata
+- Caching implemented for frequently accessed files
+- Regular monitoring of database size growth
+
+## Migration Strategy
+- Backward compatibility maintained with existing `avatar_url` column
+- Gradual migration from filesystem to BLOB storage
+- Fallback mechanisms for legacy file references
+
+## Future Enhancements
+- Document storage for lab results and medical records
+- File compression for larger documents
+- Cloud storage migration path if BLOB storage exceeds limits

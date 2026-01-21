@@ -78,6 +78,7 @@ After initial planning to avoid clinical features, the product direction has bee
 - Clinical analytics and reporting
 - Enhanced security for sensitive health information
 - Healthcare-grade compliance (PH Data Privacy Act for clinical data)
+- **MySQL BLOB Storage Implementation** for patient photos and user avatars
 
 **Rejected Alternatives:**
 1. **Hybrid Approach (Operations now, Clinical later):** Creates fragmented product experience, harder to market
@@ -91,6 +92,7 @@ After initial planning to avoid clinical features, the product direction has bee
 - Medical record retention policies (5-10 years minimum)
 - Compliance validation for healthcare data protection
 - Additional security hardening phase
+- **MySQL BLOB Storage for file management** (photos, avatars, documents)
 
 **Development Timeline Impact:**
 - Phases restructured:
@@ -131,3 +133,39 @@ After initial planning to avoid clinical features, the product direction has bee
 ---
 
 **End of decisions.md**
+
+---
+
+## 2026-01-16
+**Decision:** MySQL BLOB Storage Implementation for File Management  
+**Reason:** Store patient photos and user avatars directly in MySQL database using BLOB columns instead of filesystem storage  
+**Benefits:**
+- Better data integrity and consistency
+- Simplified backup and migration (single database backup includes all files)
+- Enhanced security (files encrypted with database encryption)
+- No file path management or broken links
+- Easier deployment and scaling (no shared filesystem requirements)
+- Atomic transactions (file and metadata updates together)
+
+**Technical Implementation:**
+- Added LONGBLOB columns to `patients` table: `photo_data`, `photo_filename`, `photo_mimetype`
+- Added LONGBLOB columns to `auth_users` table: `avatar_data`, `avatar_filename`, `avatar_mimetype`
+- Modified API endpoints to serve files directly from database
+- Implemented proper Content-Type headers and caching
+- Added file size validation (5MB limit)
+- Maintained backward compatibility with existing `avatar_url` column
+
+**Rejected Alternatives:**
+1. **Filesystem Storage:** Risk of broken file paths, backup complexity, deployment issues
+2. **Cloud Storage (S3/MinIO):** Additional infrastructure complexity, cost, and dependency
+3. **Hybrid Approach:** Increased complexity without clear benefits
+
+**Impact:**
+- Improved system reliability and data consistency
+- Simplified deployment and backup procedures
+- Enhanced security for sensitive patient photos
+- Foundation for future document management features
+
+**Owner:** Development Team  
+**Date:** 2026-01-16  
+**Status:** IMPLEMENTED - Successfully deployed with comprehensive testing

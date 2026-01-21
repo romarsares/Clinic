@@ -2,21 +2,38 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../../uploads/avatars');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Create uploads directories if they don't exist
+const avatarsDir = path.join(__dirname, '../../uploads/avatars');
+const photosDir = path.join(__dirname, '../../uploads/photos');
+
+if (!fs.existsSync(avatarsDir)) {
+  fs.mkdirSync(avatarsDir, { recursive: true });
+}
+if (!fs.existsSync(photosDir)) {
+  fs.mkdirSync(photosDir, { recursive: true });
 }
 
 // Configure multer for avatar uploads
-const storage = multer.diskStorage({
+const avatarStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+    cb(null, avatarsDir);
   },
   filename: (req, file, cb) => {
     const userId = req.user.id;
     const ext = path.extname(file.originalname);
     cb(null, `avatar-${userId}-${Date.now()}${ext}`);
+  }
+});
+
+// Configure multer for patient photo uploads
+const photoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, photosDir);
+  },
+  filename: (req, file, cb) => {
+    const patientId = req.params.id;
+    const ext = path.extname(file.originalname);
+    cb(null, `patient-${patientId}-${Date.now()}${ext}`);
   }
 });
 
@@ -29,12 +46,24 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({
-  storage,
+const uploadAvatar = multer({
+  storage: avatarStorage,
   fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   }
 });
 
-module.exports = { upload };
+const uploadPhoto = multer({
+  storage: photoStorage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+module.exports = { 
+  upload: uploadAvatar, // Keep backward compatibility
+  uploadAvatar,
+  uploadPhoto
+};

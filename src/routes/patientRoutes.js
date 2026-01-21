@@ -10,6 +10,7 @@ const express = require('express');
 const PatientController = require('../controllers/PatientController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { auditLog, logClinicalAccess } = require('../middleware/audit');
+const { uploadPhoto } = require('../middleware/upload');
 
 const router = express.Router();
 const patientController = new PatientController();
@@ -107,6 +108,39 @@ router.get('/:id/parent',
     logClinicalAccess('patient_relationships'),
     auditLog('patient_relationship', 'view'),
     (req, res) => patientController.getParent(req, res)
+);
+
+/**
+ * @route   POST /api/v1/patients/:id/photo
+ * @desc    Upload patient photo
+ * @access  Private (Staff, Admin, Owner)
+ */
+router.post('/:id/photo',
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
+    uploadPhoto.single('photo'),
+    auditLog('patient', 'photo_upload'),
+    (req, res) => patientController.uploadPhoto(req, res)
+);
+
+/**
+ * @route   DELETE /api/v1/patients/:id/photo
+ * @desc    Delete patient photo
+ * @access  Private (Staff, Admin, Owner)
+ */
+router.delete('/:id/photo',
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
+    auditLog('patient', 'photo_delete'),
+    (req, res) => patientController.deletePhoto(req, res)
+);
+
+/**
+ * @route   GET /api/v1/patients/:id/photo
+ * @desc    Get patient photo
+ * @access  Private (All clinic staff)
+ */
+router.get('/:id/photo',
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician', 'Super User']),
+    (req, res) => patientController.getPhoto(req, res)
 );
 
 module.exports = router;

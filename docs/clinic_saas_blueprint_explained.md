@@ -342,6 +342,7 @@ This is the heart of SaaS.
   - **Doctors only** can create diagnoses
   - **Lab technicians only** can enter lab results
   - Staff cannot access clinical records
+- **User avatar management** (MySQL BLOB Storage Implementation)
 - RBAC ensures security, accountability, and trust
 
 ### Appointment Management
@@ -354,6 +355,7 @@ This is the heart of SaaS.
 - **Medical history tracking** (NEW)
 - **Allergy records** (NEW)
 - **Current medications** (NEW)
+- **Patient photo management** (MySQL BLOB Storage Implementation)
 - Free-text notes for operational context
 - **Complete medical record** across all visits
 
@@ -633,3 +635,39 @@ It is a **real company**, not a side project.
 **End of Enhanced Blueprint**
 
 **This blueprint now reflects the comprehensive clinical management system that meets real market needs, justifies premium pricing, and positions for global scaling.**
+
+---
+
+## 14. MySQL BLOB Storage Implementation (Technical Innovation)
+
+### Decision Rationale
+Instead of traditional filesystem storage for patient photos and user avatars, the system uses MySQL BLOB storage for enhanced data integrity and operational simplicity.
+
+### Key Benefits
+1. **Atomic Transactions**: File uploads and metadata updates happen together
+2. **Simplified Backups**: Single database backup includes all files
+3. **Enhanced Security**: Files encrypted with database encryption at rest
+4. **No Broken Links**: Eliminates file path management issues
+5. **Easier Deployment**: No shared filesystem or cloud storage dependencies
+6. **Better Scaling**: Database replication handles file distribution automatically
+
+### Implementation Details
+- **Patient Photos**: Stored in `patients.photo_data` (LONGBLOB)
+- **User Avatars**: Stored in `auth_users.avatar_data` (LONGBLOB)
+- **File Metadata**: Filename and MIME type stored in separate columns
+- **Size Limits**: 5MB maximum to prevent database bloat
+- **API Integration**: RESTful endpoints for upload/download/delete operations
+- **Backward Compatibility**: Legacy `avatar_url` column maintained
+
+### Performance Considerations
+- Separate queries for file data vs metadata to optimize performance
+- Caching layer for frequently accessed images
+- File size validation prevents database performance issues
+- Regular monitoring of database growth
+
+### Future Scalability
+- Migration path to cloud storage if BLOB storage exceeds 50GB per tenant
+- Compression options for larger files
+- Document storage expansion for lab results and medical records
+
+This approach provides a robust foundation for file management while maintaining the simplicity and reliability that SME clinics require.

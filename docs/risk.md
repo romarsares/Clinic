@@ -147,6 +147,8 @@
   - Regular performance monitoring
   - Load testing before launch
   - Database scaling plan (read replicas, sharding)
+  - **MySQL BLOB Storage optimization** for file retrieval
+  - **File size limits** (5MB) to prevent database bloat
 
 ### R-TC-05: Lab Result Data Integrity
 - **Risk:** Lab results entered incorrectly or linked to wrong patient
@@ -367,3 +369,16 @@
 7. Reorganized into Critical/High/Medium severity categories
 8. Added risk review schedule
 9. Enhanced mitigation strategies for healthcare data protection
+
+### R-TC-07: MySQL BLOB Storage Performance
+- **Risk:** Large BLOB files (photos, documents) impact database performance
+- **Severity:** Medium
+- **Impact:** Slower database queries, increased storage costs, backup time increases
+- **Mitigation:**
+  - File size limits enforced (5MB maximum)
+  - Separate BLOB queries from metadata queries
+  - Implement caching for frequently accessed files
+  - Monitor database size growth
+  - Consider BLOB compression for large files
+  - Regular database maintenance and optimization
+  - Plan migration to cloud storage if BLOB storage exceeds 50GB per tenant
