@@ -14,7 +14,7 @@ class UIController {
      * Serve dashboard page
      */
     static serveDashboard(req, res) {
-        const dashboardPath = path.join(__dirname, '../../public/views/dashboard-clean-nextui.html');
+        const dashboardPath = path.join(__dirname, '../../public/views/dashboard-nextui-exact.html');
         res.sendFile(dashboardPath);
     }
 
@@ -30,7 +30,7 @@ class UIController {
      * Serve patients page
      */
     static servePatients(req, res) {
-        const patientsPath = path.join(__dirname, '../../public/views/patients.html');
+        const patientsPath = path.join(__dirname, '../../public/views/patients-nextui.html');
         res.sendFile(patientsPath);
     }
 
@@ -38,7 +38,7 @@ class UIController {
      * Serve appointments page
      */
     static serveAppointments(req, res) {
-        const appointmentsPath = path.join(__dirname, '../../public/views/appointments.html');
+        const appointmentsPath = path.join(__dirname, '../../public/views/appointments-nextui.html');
         res.sendFile(appointmentsPath);
     }
 
@@ -46,7 +46,7 @@ class UIController {
      * Serve visits page
      */
     static serveVisits(req, res) {
-        const visitsPath = path.join(__dirname, '../../public/views/visits.html');
+        const visitsPath = path.join(__dirname, '../../public/views/visits-nextui.html');
         res.sendFile(visitsPath);
     }
 
@@ -54,7 +54,7 @@ class UIController {
      * Serve users page
      */
     static serveUsers(req, res) {
-        const usersPath = path.join(__dirname, '../../public/views/users.html');
+        const usersPath = path.join(__dirname, '../../public/views/users-nextui.html');
         res.sendFile(usersPath);
     }
 
@@ -96,34 +96,8 @@ class UIController {
      * Serve settings page (placeholder)
      */
     static serveSettings(req, res) {
-        res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Settings - Clinic SaaS</title>
-                <link rel="stylesheet" href="/css/dashboard.css">
-            </head>
-            <body>
-                <div class="header">
-                    <h1>Settings</h1>
-                    <a href="/dashboard" class="btn">← Back to Dashboard</a>
-                </div>
-                <div class="main-content" style="margin-left: 0;">
-                    <div class="card">
-                        <h3>Settings Module</h3>
-                        <p>This is a placeholder for the settings interface.</p>
-                        <p>Features will include:</p>
-                        <ul>
-                            <li>Clinic profile and configuration</li>
-                            <li>User preferences</li>
-                            <li>System settings</li>
-                            <li>Security settings</li>
-                        </ul>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `);
+        const settingsPath = path.join(__dirname, '../../public/views/settings-nextui.html');
+        res.sendFile(settingsPath);
     }
 }
 
