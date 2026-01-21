@@ -19,6 +19,7 @@ const visitRoutes = require('./visits');
 const authRoutes = require('./authRoutes');
 const clinicRoutes = require('./clinicRoutes');
 const userRoutes = require('./userRoutes');
+const userPreferencesRoutes = require('./userPreferencesRoutes');
 const auditRoutes = require('./auditRoutes');
 const patientRoutes = require('./patientRoutes');
 const appointmentRoutes = require('./appointmentRoutes');
@@ -64,6 +65,12 @@ router.use(`${API_VERSION}/test-auth`, testAuthRoutes);
  * Handles user management within clinic tenants
  */
 router.use(`${API_VERSION}/users`, userRoutes);
+
+/**
+ * User Preferences Routes
+ * Handles user preference settings and personalization
+ */
+router.use(`${API_VERSION}/users`, userPreferencesRoutes);
 
 /**
  * Patient Management Routes
