@@ -1,8 +1,21 @@
 const db = require('../config/database');
+const { checkUserPermission } = require('../middleware/permissions');
 
 class AuditController {
+    // Get audit logs
+    // Required Permission: admin.audit
     static async getLogs(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.audit');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'admin.audit'
+                });
+            }
+
             const limit = parseInt(req.query.limit) || 10;
             const clinicId = req.user?.clinic_id || 1;
             

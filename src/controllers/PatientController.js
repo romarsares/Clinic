@@ -4,11 +4,13 @@
  * Author: Romar Tabaosares
  * Created: 2024-12-19
  * Purpose: Handles patient demographics and parent-child relationships
+ * Updated: Added granular permission validation
  */
 
 const { body, param, query, validationResult } = require('express-validator');
 const Patient = require('../models/Patient');
 const AuditService = require('../services/AuditService');
+const { checkUserPermission } = require('../middleware/permissions');
 const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
@@ -21,9 +23,20 @@ class PatientController {
     /**
      * List patients in clinic
      * GET /api/v1/patients
+     * Required Permission: patient.view
      */
     async listPatients(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'patient.view');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'patient.view'
+                });
+            }
+
             const clinicId = req.user.clinic_id;
             const { page = 1, limit = 20, type = 'all' } = req.query;
             
@@ -50,9 +63,20 @@ class PatientController {
     /**
      * Create new patient
      * POST /api/v1/patients
+     * Required Permission: patient.add
      */
     async createPatient(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'patient.add');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'patient.add'
+                });
+            }
+
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(400).json({ success: false, errors: errors.array() });
@@ -84,9 +108,20 @@ class PatientController {
     /**
      * Search patients
      * GET /api/v1/patients/search
+     * Required Permission: patient.view
      */
     async searchPatients(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'patient.view');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'patient.view'
+                });
+            }
+
             const clinicId = req.user.clinic_id;
             const { q: searchTerm, limit = 10 } = req.query;
 
@@ -118,9 +153,20 @@ class PatientController {
     /**
      * Get patient details
      * GET /api/v1/patients/:id
+     * Required Permission: patient.view
      */
     async getPatientDetails(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'patient.view');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'patient.view'
+                });
+            }
+
             const { id } = req.params;
             const patient = await this.patientModel.getById(id);
 
@@ -170,9 +216,20 @@ class PatientController {
     /**
      * Update patient information
      * PUT /api/v1/patients/:id
+     * Required Permission: patient.edit
      */
     async updatePatient(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'patient.edit');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'patient.edit'
+                });
+            }
+
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(400).json({ success: false, errors: errors.array() });
@@ -227,9 +284,20 @@ class PatientController {
     /**
      * Add child to parent
      * POST /api/v1/patients/:id/children
+     * Required Permission: patient.add
      */
     async addChild(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'patient.add');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'patient.add'
+                });
+            }
+
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(400).json({ success: false, errors: errors.array() });
@@ -364,9 +432,20 @@ class PatientController {
 
     /**
      * Upload patient photo
+     * Required Permission: patient.edit
      */
     async uploadPhoto(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'patient.edit');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'patient.edit'
+                });
+            }
+
             const { id } = req.params;
             const clinicId = req.user.clinic_id;
 
@@ -480,9 +559,20 @@ class PatientController {
 
     /**
      * Delete patient photo
+     * Required Permission: patient.edit
      */
     async deletePhoto(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'patient.edit');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'patient.edit'
+                });
+            }
+
             const { id } = req.params;
             const clinicId = req.user.clinic_id;
 
@@ -536,6 +626,59 @@ class PatientController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to delete photo',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Delete patient (soft delete)
+     * DELETE /api/v1/patients/:id
+     * Required Permission: patient.delete
+     */
+    async deletePatient(req, res) {
+        try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'patient.delete');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'patient.delete'
+                });
+            }
+
+            const { id } = req.params;
+            const clinicId = req.user.clinic_id;
+
+            // Verify patient exists
+            const patient = await this.patientModel.getById(id);
+            if (!patient || patient.clinic_id !== clinicId) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Patient not found'
+                });
+            }
+
+            // Soft delete patient
+            await db.execute(
+                'UPDATE patients SET deleted_at = NOW(), updated_at = NOW() WHERE id = ? AND clinic_id = ?',
+                [id, clinicId]
+            );
+
+            // Log patient deletion
+            await AuditService.logCRUD(req, 'delete', 'patient', id, patient, null);
+
+            res.json({
+                success: true,
+                message: 'Patient deleted successfully'
+            });
+
+        } catch (error) {
+            console.error('Error deleting patient:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to delete patient',
                 error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
             });
         }

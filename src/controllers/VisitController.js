@@ -4,20 +4,13 @@
  * Author: Romar Tabaosares
  * Created: 2024-12-19
  * Purpose: Handles API endpoints for clinical documentation and visit management
- * 
- * This controller manages:
- * - Visit creation and retrieval
- * - Chief complaint documentation
- * - Diagnosis entry (Doctor only)
- * - Vital signs recording
- * - Treatment plans (Doctor only)
- * - Clinical assessments
- * - Follow-up instructions
+ * Updated: Added granular permission validation
  */
 
 const { body, param, validationResult } = require('express-validator');
 const Visit = require('../models/Visit');
 const Billing = require('../models/Billing');
+const { checkUserPermission } = require('../middleware/permissions');
 const db = require('../config/database');
 
 class VisitController {
@@ -28,9 +21,20 @@ class VisitController {
   /**
    * Create a new visit
    * POST /visits
+   * Required Permission: clinical.visit.create
    */
   async createVisit(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'clinical.visit.create');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'clinical.visit.create'
+        });
+      }
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -69,9 +73,20 @@ class VisitController {
   /**
    * Get visit details with clinical summary
    * GET /visits/:id
+   * Required Permission: clinical.visit.view
    */
   async getVisit(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'clinical.visit.view');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'clinical.visit.view'
+        });
+      }
+
       const { id } = req.params;
       const clinic_id = req.user.clinic_id;
 
@@ -102,9 +117,20 @@ class VisitController {
   /**
    * Add chief complaint to visit
    * PUT /visits/:id/chief-complaint
+   * Required Permission: clinical.visit.edit
    */
   async addChiefComplaint(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'clinical.visit.edit');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'clinical.visit.edit'
+        });
+      }
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -135,10 +161,21 @@ class VisitController {
   /**
    * Add diagnosis to visit (Doctor only)
    * POST /visits/:id/diagnoses
+   * Required Permission: clinical.visit.edit
    */
   async addDiagnosis(req, res) {
     try {
-      // Check if user is a doctor
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'clinical.visit.edit');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'clinical.visit.edit'
+        });
+      }
+
+      // Check if user is a doctor (additional role check)
       if (!req.user.roles.includes('Doctor')) {
         return res.status(403).json({
           success: false,
@@ -177,9 +214,20 @@ class VisitController {
   /**
    * Record vital signs
    * PUT /visits/:id/vital-signs
+   * Required Permission: clinical.visit.edit
    */
   async recordVitalSigns(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'clinical.visit.edit');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'clinical.visit.edit'
+        });
+      }
+
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
@@ -211,10 +259,21 @@ class VisitController {
   /**
    * Add clinical assessment (Doctor only)
    * PUT /visits/:id/clinical-assessment
+   * Required Permission: clinical.visit.edit
    */
   async addClinicalAssessment(req, res) {
     try {
-      // Check if user is a doctor
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'clinical.visit.edit');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'clinical.visit.edit'
+        });
+      }
+
+      // Check if user is a doctor (additional role check)
       if (!req.user.roles.includes('Doctor')) {
         return res.status(403).json({
           success: false,
@@ -252,10 +311,21 @@ class VisitController {
   /**
    * Add treatment plan (Doctor only)
    * PUT /visits/:id/treatment-plan
+   * Required Permission: clinical.visit.edit
    */
   async addTreatmentPlan(req, res) {
     try {
-      // Check if user is a doctor
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'clinical.visit.edit');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'clinical.visit.edit'
+        });
+      }
+
+      // Check if user is a doctor (additional role check)
       if (!req.user.roles.includes('Doctor')) {
         return res.status(403).json({
           success: false,
@@ -326,10 +396,21 @@ class VisitController {
   /**
    * Close visit
    * PUT /visits/:id/close
+   * Required Permission: clinical.visit.edit
    */
   async closeVisit(req, res) {
     try {
-      // Check if user is a doctor
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'clinical.visit.edit');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'clinical.visit.edit'
+        });
+      }
+
+      // Check if user is a doctor (additional role check)
       if (!req.user.roles.includes('Doctor')) {
         return res.status(403).json({
           success: false,

@@ -2,14 +2,22 @@ const LabRequest = require('../models/LabRequest');
 const LabResult = require('../models/LabResult');
 const Billing = require('../models/Billing');
 const AuditService = require('../services/AuditService');
+const { checkUserPermission } = require('../middleware/permissions');
 const Joi = require('joi');
 
 class LabController {
   // Create lab request (doctors only)
+  // Required Permission: lab.request
   static async createLabRequest(req, res) {
     try {
-      if (req.user.role !== 'Doctor') {
-        return res.status(403).json({ error: 'Only doctors can create lab requests' });
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'lab.request');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'lab.request'
+        });
       }
 
       const schema = Joi.object({
@@ -47,8 +55,18 @@ class LabController {
   }
 
   // Get lab requests
+  // Required Permission: lab.view
   static async getLabRequests(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'lab.view');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'lab.view'
+        });
+      }
       const filters = {};
       if (req.query.status) filters.status = req.query.status;
       if (req.query.patient_id) filters.patient_id = req.query.patient_id;
@@ -63,8 +81,18 @@ class LabController {
   }
 
   // Get lab request by ID
+  // Required Permission: lab.view
   static async getLabRequestById(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'lab.view');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'lab.view'
+        });
+      }
       const labRequest = await LabRequest.findById(req.user.tenant_id, req.params.id);
       if (!labRequest) {
         return res.status(404).json({ error: 'Lab request not found' });
@@ -83,8 +111,18 @@ class LabController {
   }
 
   // Update lab request status
+  // Required Permission: lab.edit
   static async updateLabRequestStatus(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'lab.edit');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'lab.edit'
+        });
+      }
       const schema = Joi.object({
         status: Joi.string().valid('pending', 'in_progress', 'completed', 'cancelled').required(),
         notes: Joi.string().optional()
@@ -122,10 +160,17 @@ class LabController {
   }
 
   // Create lab result (lab technicians only)
+  // Required Permission: lab.results
   static async createLabResult(req, res) {
     try {
-      if (req.user.role !== 'Lab Technician') {
-        return res.status(403).json({ error: 'Only lab technicians can enter results' });
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'lab.results');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'lab.results'
+        });
       }
 
       const schema = Joi.object({
@@ -192,8 +237,18 @@ class LabController {
   }
 
   // Get lab result by lab request ID
+  // Required Permission: lab.view
   static async getLabResult(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'lab.view');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'lab.view'
+        });
+      }
       const labResult = await LabResult.findByLabRequest(req.user.tenant_id, req.params.labRequestId);
       if (!labResult) {
         return res.status(404).json({ error: 'Lab result not found' });
@@ -207,8 +262,18 @@ class LabController {
   }
 
   // Get patient lab history
+  // Required Permission: lab.view
   static async getPatientLabHistory(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'lab.view');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'lab.view'
+        });
+      }
       const labHistory = await LabResult.findByPatient(req.user.tenant_id, req.params.patientId);
       
       await AuditService.log(req.user.tenant_id, {
@@ -238,8 +303,18 @@ class LabController {
   }
 
   // Get lab dashboard statistics
+  // Required Permission: lab.view
   static async getLabDashboard(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'lab.view');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'lab.view'
+        });
+      }
       const stats = await LabRequest.getDashboardStats(req.user.tenant_id);
       const criticalResults = await LabResult.getCriticalResults(req.user.tenant_id);
 

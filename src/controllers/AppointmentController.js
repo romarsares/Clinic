@@ -4,10 +4,12 @@
  * Author: Romar Tabaosares
  * Created: 2024-12-19
  * Purpose: Handles appointment scheduling, updates, and cancellations
+ * Updated: Added granular permission validation
  */
 
 const { body, param, query, validationResult } = require('express-validator');
 const Appointment = require('../models/Appointment');
+const { checkUserPermission } = require('../middleware/permissions');
 const db = require('../config/database');
 
 class AppointmentController {
@@ -18,9 +20,20 @@ class AppointmentController {
     /**
      * List appointments in clinic
      * GET /api/v1/appointments
+     * Required Permission: appointment.view
      */
     async listAppointments(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'appointment.view');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'appointment.view'
+                });
+            }
+
             const clinicId = req.user.clinic_id;
             const { 
                 page = 1, 
@@ -57,9 +70,20 @@ class AppointmentController {
     /**
      * Create new appointment
      * POST /api/v1/appointments
+     * Required Permission: appointment.create
      */
     async createAppointment(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'appointment.create');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'appointment.create'
+                });
+            }
+
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(400).json({ success: false, errors: errors.array() });
@@ -104,9 +128,20 @@ class AppointmentController {
     /**
      * Get available time slots
      * GET /api/v1/appointments/available-slots
+     * Required Permission: appointment.view
      */
     async getAvailableTimeSlots(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'appointment.view');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'appointment.view'
+                });
+            }
+
             const clinicId = req.user.clinic_id;
             const { doctor_id, date, appointment_type_id } = req.query;
 
@@ -229,9 +264,20 @@ class AppointmentController {
     /**
      * Get appointment details
      * GET /api/v1/appointments/:id
+     * Required Permission: appointment.view
      */
     async getAppointmentDetails(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'appointment.view');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'appointment.view'
+                });
+            }
+
             const { id } = req.params;
             const appointment = await this.appointmentModel.getById(id);
 
@@ -267,9 +313,20 @@ class AppointmentController {
     /**
      * Update appointment
      * PUT /api/v1/appointments/:id
+     * Required Permission: appointment.edit
      */
     async updateAppointment(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'appointment.edit');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'appointment.edit'
+                });
+            }
+
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(400).json({ success: false, errors: errors.array() });
@@ -332,9 +389,20 @@ class AppointmentController {
     /**
      * Update appointment status
      * PUT /api/v1/appointments/:id/status
+     * Required Permission: appointment.edit
      */
     async updateAppointmentStatus(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'appointment.edit');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'appointment.edit'
+                });
+            }
+
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(400).json({ success: false, errors: errors.array() });
@@ -378,9 +446,20 @@ class AppointmentController {
     /**
      * Cancel appointment
      * DELETE /api/v1/appointments/:id
+     * Required Permission: appointment.cancel
      */
     async cancelAppointment(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'appointment.cancel');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'appointment.cancel'
+                });
+            }
+
             const { id } = req.params;
             const { reason } = req.body;
 

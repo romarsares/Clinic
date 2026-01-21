@@ -1,13 +1,26 @@
+/**
+ * Billing Controller - Clinical Billing Operations
+ * Updated: Added granular permission validation
+ */
+
 const Billing = require('../models/Billing');
 const AuditService = require('../services/AuditService');
+const { checkUserPermission } = require('../middleware/permissions');
 const Joi = require('joi');
 
 class BillingController {
   // Generate bill for visit
+  // Required Permission: billing.create
   static async generateVisitBill(req, res) {
     try {
-      if (!['Doctor', 'Staff', 'Owner'].includes(req.user.role)) {
-        return res.status(403).json({ error: 'Access denied' });
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'billing.create');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'billing.create'
+        });
       }
 
       const { visitId, patientId } = req.params;
@@ -33,10 +46,17 @@ class BillingController {
   }
 
   // Add lab charges to bill
+  // Required Permission: billing.create
   static async addLabCharges(req, res) {
     try {
-      if (!['Doctor', 'Staff', 'Owner'].includes(req.user.role)) {
-        return res.status(403).json({ error: 'Access denied' });
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'billing.create');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'billing.create'
+        });
       }
 
       const { labRequestId } = req.params;
@@ -62,8 +82,19 @@ class BillingController {
   }
 
   // Get patient bills
+  // Required Permission: billing.view
   static async getPatientBills(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'billing.view');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'billing.view'
+        });
+      }
+
       const bills = await Billing.getBillsByPatient(req.user.tenant_id, req.params.patientId);
       res.json(bills);
     } catch (error) {
@@ -73,8 +104,19 @@ class BillingController {
   }
 
   // Get bill details
+  // Required Permission: billing.view
   static async getBillDetails(req, res) {
     try {
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'billing.view');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'billing.view'
+        });
+      }
+
       const bill = await Billing.getBillDetails(req.user.tenant_id, req.params.billId);
       
       if (!bill) {
@@ -89,10 +131,17 @@ class BillingController {
   }
 
   // Add manual service charge
+  // Required Permission: billing.create
   static async addServiceCharge(req, res) {
     try {
-      if (!['Doctor', 'Staff', 'Owner'].includes(req.user.role)) {
-        return res.status(403).json({ error: 'Access denied' });
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'billing.create');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'billing.create'
+        });
       }
 
       const schema = Joi.object({
@@ -143,10 +192,17 @@ class BillingController {
   }
 
   // Update bill status
+  // Required Permission: billing.payment
   static async updateBillStatus(req, res) {
     try {
-      if (!['Staff', 'Owner'].includes(req.user.role)) {
-        return res.status(403).json({ error: 'Only staff and owners can update bill status' });
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'billing.payment');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'billing.payment'
+        });
       }
 
       const schema = Joi.object({
@@ -186,10 +242,17 @@ class BillingController {
   }
 
   // Get billing dashboard
+  // Required Permission: billing.view
   static async getBillingDashboard(req, res) {
     try {
-      if (!['Owner', 'Staff'].includes(req.user.role)) {
-        return res.status(403).json({ error: 'Access denied' });
+      // Check permission
+      const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'billing.view');
+      if (!hasPermission) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions',
+          required_permission: 'billing.view'
+        });
       }
 
       const db = require('../middleware/tenant').TenantDB.getConnection(req.user.tenant_id);

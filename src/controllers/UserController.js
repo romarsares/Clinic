@@ -2,15 +2,27 @@ const db = require('../config/database');
 const bcrypt = require('bcryptjs');
 const AuditService = require('../services/AuditService');
 const { body, validationResult } = require('express-validator');
+const { checkUserPermission } = require('../middleware/permissions');
 const fs = require('fs');
 const path = require('path');
 
 class UserController {
     /**
      * List users in clinic
+     * Required Permission: admin.users
      */
     async listUsers(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'admin.users'
+                });
+            }
+
             const limit = parseInt(req.query.limit) || 50;
             const clinicId = req.user.clinic_id;
             
@@ -50,9 +62,20 @@ class UserController {
 
     /**
      * Create new user
+     * Required Permission: admin.users
      */
     async createUser(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'admin.users'
+                });
+            }
+
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(400).json({ 
@@ -261,9 +284,20 @@ class UserController {
 
     /**
      * Update user roles - CRITICAL FUNCTIONALITY
+     * Required Permission: admin.permissions
      */
     async updateUserRoles(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.permissions');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'admin.permissions'
+                });
+            }
+
             const userId = parseInt(req.params.id);
             const clinicId = req.user.clinic_id;
             const { role_ids } = req.body;
@@ -347,9 +381,20 @@ class UserController {
 
     /**
      * Update user status (active/suspended)
+     * Required Permission: admin.users
      */
     async updateUserStatus(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'admin.users'
+                });
+            }
+
             const userId = parseInt(req.params.id);
             const clinicId = req.user.clinic_id;
             const { status } = req.body;
@@ -659,9 +704,20 @@ class UserController {
 
     /**
      * Delete user (soft delete)
+     * Required Permission: admin.users
      */
     async deleteUser(req, res) {
         try {
+            // Check permission
+            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
+            if (!hasPermission) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Insufficient permissions',
+                    required_permission: 'admin.users'
+                });
+            }
+
             const userId = parseInt(req.params.id);
             const clinicId = req.user.clinic_id;
 
