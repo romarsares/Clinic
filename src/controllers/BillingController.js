@@ -465,6 +465,87 @@ class BillingController {
             res.status(500).json({ success: false, message: error.message });
         }
     }
+
+    // Missing methods from routes
+    static async generateVisitBill(req, res) {
+        try {
+            const { visitId, patientId } = req.params;
+            await BillingController.calculateVisitCharges({ params: { visitId } }, res);
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    static async getPatientBills(req, res) {
+        try {
+            const { patientId } = req.params;
+            const { tenantId } = req.user;
+            
+            const query = `
+                SELECT v.id, v.visit_date, v.total_charges, 
+                       COALESCE(SUM(p.amount), 0) as paid_amount
+                FROM visits v
+                LEFT JOIN payments p ON v.id = p.visit_id
+                WHERE v.patient_id = ? AND v.tenant_id = ?
+                GROUP BY v.id
+                ORDER BY v.visit_date DESC
+            `;
+            
+            const [bills] = await db.execute(query, [patientId, tenantId]);
+            res.json({ success: true, data: bills });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    static async getBillDetails(req, res) {
+        try {
+            const { billId } = req.params;
+            const { tenantId } = req.user;
+            
+            const query = `
+                SELECT v.*, bc.service_type, bc.description, bc.amount
+                FROM visits v
+                LEFT JOIN billing_charges bc ON v.id = bc.visit_id
+                WHERE v.id = ? AND v.tenant_id = ?
+            `;
+            
+            const [details] = await db.execute(query, [billId, tenantId]);
+            res.json({ success: true, data: details });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    static async addServiceCharge(req, res) {
+        try {
+            const { billId } = req.params;
+            const { serviceType, description, amount, billingCode } = req.body;
+            
+            const query = `
+                INSERT INTO billing_charges (visit_id, service_type, description, amount, billing_code, created_at)
+                VALUES (?, ?, ?, ?, ?, NOW())
+            `;
+            
+            await db.execute(query, [billId, serviceType, description, amount, billingCode]);
+            res.json({ success: true, message: 'Service charge added successfully' });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    static async updateBillStatus(req, res) {
+        try {
+            const { billId } = req.params;
+            const { status } = req.body;
+            
+            const query = `UPDATE visits SET billing_status = ?, updated_at = NOW() WHERE id = ?`;
+            await db.execute(query, [status, billId]);
+            res.json({ success: true, message: 'Bill status updated successfully' });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
 }
 
 module.exports = BillingController;
