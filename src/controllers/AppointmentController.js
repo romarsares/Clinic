@@ -102,9 +102,79 @@ class AppointmentController {
     }
 
     /**
-     * Get calendar view
-     * GET /api/v1/appointments/calendar
+     * Get available time slots
+     * GET /api/v1/appointments/available-slots
      */
+    async getAvailableTimeSlots(req, res) {
+        try {
+            const clinicId = req.user.clinic_id;
+            const { doctor_id, date, appointment_type_id } = req.query;
+
+            if (!doctor_id || !date) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Doctor ID and date are required'
+                });
+            }
+
+            const availableSlots = await this.appointmentModel.getAvailableTimeSlots(
+                clinicId, 
+                doctor_id, 
+                date, 
+                appointment_type_id
+            );
+            
+            res.json({
+                success: true,
+                data: availableSlots
+            });
+        } catch (error) {
+            console.error('Error fetching available time slots:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch available time slots',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Validate time slot
+     * POST /api/v1/appointments/validate-slot
+     */
+    async validateTimeSlot(req, res) {
+        try {
+            const clinicId = req.user.clinic_id;
+            const { doctor_id, appointment_date, appointment_time, duration = 30 } = req.body;
+
+            if (!doctor_id || !appointment_date || !appointment_time) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Doctor ID, appointment date, and time are required'
+                });
+            }
+
+            const validation = await this.appointmentModel.validateTimeSlot(
+                clinicId,
+                doctor_id,
+                appointment_date,
+                appointment_time,
+                duration
+            );
+            
+            res.json({
+                success: true,
+                data: validation
+            });
+        } catch (error) {
+            console.error('Error validating time slot:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to validate time slot',
+                error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+            });
+        }
+    }
     async getCalendarView(req, res) {
         try {
             const clinicId = req.user.clinic_id;
@@ -355,7 +425,7 @@ class AppointmentController {
             body('doctor_id').isInt().withMessage('Valid doctor ID is required'),
             body('appointment_date').isISO8601().withMessage('Valid appointment date is required'),
             body('appointment_time').matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Valid appointment time is required (HH:MM format)'),
-            body('appointment_type').isIn(['consultation', 'follow_up', 'vaccination', 'check_up']).withMessage('Valid appointment type is required'),
+            body('appointment_type_id').optional().isInt().withMessage('Valid appointment type ID is required'),
             body('duration').optional().isInt({ min: 15, max: 180 }).withMessage('Duration must be between 15 and 180 minutes'),
             body('notes').optional().trim()
         ];
@@ -371,7 +441,7 @@ class AppointmentController {
             body('doctor_id').optional().isInt().withMessage('Valid doctor ID is required'),
             body('appointment_date').optional().isISO8601().withMessage('Valid appointment date is required'),
             body('appointment_time').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Valid appointment time is required (HH:MM format)'),
-            body('appointment_type').optional().isIn(['consultation', 'follow_up', 'vaccination', 'check_up']).withMessage('Valid appointment type is required'),
+            body('appointment_type_id').optional().isInt().withMessage('Valid appointment type ID is required'),
             body('duration').optional().isInt({ min: 15, max: 180 }).withMessage('Duration must be between 15 and 180 minutes'),
             body('notes').optional().trim()
         ];

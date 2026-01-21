@@ -23,6 +23,7 @@ const userPreferencesRoutes = require('./userPreferencesRoutes');
 const auditRoutes = require('./auditRoutes');
 const patientRoutes = require('./patientRoutes');
 const appointmentRoutes = require('./appointmentRoutes');
+const appointmentTypesRoutes = require('./appointmentTypesRoutes');
 const tenantRoutes = require('./tenantRoutes');
 const medicalHistoryRoutes = require('./medicalHistoryRoutes');
 const labRoutes = require('./labRoutes');
@@ -83,6 +84,12 @@ router.use(`${API_VERSION}/patients`, enforceTenantIsolation, patientRoutes);
  * Handles appointment scheduling, updates, and cancellations
  */
 router.use(`${API_VERSION}/appointments`, enforceTenantIsolation, appointmentRoutes);
+
+/**
+ * Appointment Types Management Routes
+ * Handles appointment type configuration and management
+ */
+router.use(`${API_VERSION}/appointment-types`, enforceTenantIsolation, appointmentTypesRoutes);
 
 /**
  * Clinical Documentation Routes

@@ -241,6 +241,67 @@ class Appointment {
     }
 
     /**
+     * Get available time slots for a doctor on a specific date
+     */
+    async getAvailableTimeSlots(clinicId, doctorId, appointmentDate, appointmentTypeId = null) {
+        // Get clinic operating hours (default 8:00 AM to 6:00 PM)
+        const startHour = 8;
+        const endHour = 18;
+        const slotDuration = 30; // 30-minute slots
+        
+        // Get appointment type duration if provided
+        let typeDuration = slotDuration;
+        if (appointmentTypeId) {
+            const [typeRows] = await this.db.execute(
+                'SELECT duration_minutes FROM appointment_types WHERE id = ? AND clinic_id = ?',
+                [appointmentTypeId, clinicId]
+            );
+            if (typeRows.length > 0) {
+                typeDuration = typeRows[0].duration_minutes;
+            }
+        }
+
+        // Generate all possible time slots
+        const allSlots = [];
+        for (let hour = startHour; hour < endHour; hour++) {
+            for (let minute = 0; minute < 60; minute += slotDuration) {
+                const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                allSlots.push({
+                    time: timeStr,
+                    available: true
+                });
+            }
+        }
+
+        // Get existing appointments for the date
+        const [existingAppointments] = await this.db.execute(`
+            SELECT appointment_time, duration 
+            FROM appointments 
+            WHERE clinic_id = ? AND doctor_id = ? AND appointment_date = ?
+            AND status NOT IN ('cancelled', 'no_show')
+        `, [clinicId, doctorId, appointmentDate]);
+
+        // Mark unavailable slots
+        existingAppointments.forEach(appointment => {
+            const [hours, minutes] = appointment.appointment_time.split(':').map(Number);
+            const startMinutes = hours * 60 + minutes;
+            const endMinutes = startMinutes + appointment.duration;
+
+            allSlots.forEach(slot => {
+                const [slotHours, slotMins] = slot.time.split(':').map(Number);
+                const slotStartMinutes = slotHours * 60 + slotMins;
+                const slotEndMinutes = slotStartMinutes + typeDuration;
+
+                // Check if slots overlap
+                if ((slotStartMinutes < endMinutes && slotEndMinutes > startMinutes)) {
+                    slot.available = false;
+                }
+            });
+        });
+
+        return allSlots.filter(slot => slot.available);
+    }
+    /**
      * Check for time conflicts
      */
     async checkTimeConflict(clinicId, doctorId, appointmentDate, appointmentTime, duration, excludeId = null) {
@@ -271,6 +332,38 @@ class Appointment {
 
         const [rows] = await this.db.execute(query, params);
         return rows.length > 0;
+    }
+
+    /**
+     * Validate appointment time slot
+     */
+    async validateTimeSlot(clinicId, doctorId, appointmentDate, appointmentTime, duration) {
+        // Check if time is within operating hours (8 AM - 6 PM)
+        const [hours, minutes] = appointmentTime.split(':').map(Number);
+        const timeInMinutes = hours * 60 + minutes;
+        const startOfDay = 8 * 60; // 8:00 AM
+        const endOfDay = 18 * 60; // 6:00 PM
+        
+        if (timeInMinutes < startOfDay || (timeInMinutes + duration) > endOfDay) {
+            return {
+                valid: false,
+                message: 'Appointment time must be between 8:00 AM and 6:00 PM'
+            };
+        }
+
+        // Check for conflicts
+        const hasConflict = await this.checkTimeConflict(clinicId, doctorId, appointmentDate, appointmentTime, duration);
+        if (hasConflict) {
+            return {
+                valid: false,
+                message: 'Time slot is already booked'
+            };
+        }
+
+        return {
+            valid: true,
+            message: 'Time slot is available'
+        };
     }
 
     /**

@@ -42,6 +42,26 @@ router.post('/',
 );
 
 /**
+ * @route   GET /api/v1/appointments/available-slots
+ * @desc    Get available time slots for a doctor on a specific date
+ * @access  Private (Staff, Admin, Owner)
+ */
+router.get('/available-slots',
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
+    (req, res) => appointmentController.getAvailableTimeSlots(req, res)
+);
+
+/**
+ * @route   POST /api/v1/appointments/validate-slot
+ * @desc    Validate if a time slot is available
+ * @access  Private (Staff, Admin, Owner)
+ */
+router.post('/validate-slot',
+    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
+    (req, res) => appointmentController.validateTimeSlot(req, res)
+);
+
+/**
  * @route   GET /api/v1/appointments/calendar
  * @desc    Get appointments for calendar view
  * @access  Private (All clinic staff)
