@@ -29,6 +29,7 @@ feat: Phase 6.2.1 Timeline & Statistics + Project Cleanup
 🔧 Files Updated:
 - public/views/appointments-nextui.html (Phase 6.2.1 integration)
 - src/controllers/BillingController.js (fixed missing methods)
+- src/controllers/UIController.js (fixed deleted file references)
 - docs/task.md (Phase 6.2.1 marked complete)
 
 Phase 6.2.1 Complete ✅

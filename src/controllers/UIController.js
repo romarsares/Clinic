@@ -15,7 +15,7 @@ class UIController {
      */
     static serveDashboard(req, res) {
         // For now, serve the main dashboard - role detection will be handled by JavaScript
-        const dashboardPath = path.join(__dirname, '../../public/views/dashboard-nextui-exact.html');
+        const dashboardPath = path.join(__dirname, '../../public/views/dashboard-nextui.html');
         res.sendFile(dashboardPath);
     }
 
@@ -47,7 +47,7 @@ class UIController {
      * Serve login page
      */
     static serveLogin(req, res) {
-        const loginPath = path.join(__dirname, '../../public/views/login-nextui-simple.html');
+        const loginPath = path.join(__dirname, '../../public/views/login-nextui.html');
         res.sendFile(loginPath);
     }
 
