@@ -23,6 +23,60 @@ describe('Role Assignment Workflows Testing', () => {
     let testUsers = {};
 
     beforeAll(async () => {
+        // Create test clinic and admin user first
+        await db.execute(`INSERT IGNORE INTO clinics (id, name, email, status) VALUES (?, 'Test Clinic', 'test@clinic.com', 'active')`, [testClinicId]);
+
+        // Seed admin user (password: admin12354) - using simple hash for test environment if bcrypt not used in seed, 
+        // but since login uses bcrypt compare, we need a valid hash.
+        // Assuming the auth flow uses standard bcrypt.
+        // The password 'admin12354' hash: $2a$10$...................... (using a placeholder or relying on registration if possible, but registration requires no auth?)
+        // Actually, let's just register the admin first if it doesn't exist, or seed it directly.
+        // Direct seed is safer.
+        const adminHash = '$2b$10$abcdefghijklmnopqrstuv'; // This needs to be a real hash if we want login to work. 
+        // Wait, the test uses /api/v1/auth/login.
+        // Let's create the admin via direct DB insert with a known hash or use a helper if available.
+        // Since I don't have the hash for 'admin12354' handy, I'll register a new admin.
+
+        // But first, we need to make sure we can register without being logged in (which is usually true).
+        // However, the test login uses 'admin@clinic.com' / 'admin12354'.
+
+        // Let's insert the admin user with a known password hash. 
+        // For 'admin12354', let's use a dummy hash if the system mocks auth, but the test environment uses real bcrypt.
+        // I will rely on the app's registration endpoint or insert a user with a hash I can generate or mock.
+        // Since I cannot generate a hash easily here, I will try to REGISTER the admin user first.
+
+        // Register Admin
+        await request(app)
+            .post('/api/v1/auth/register')
+            .send({
+                email: 'admin@clinic.com',
+                password: 'admin12354',
+                full_name: 'Admin User',
+                clinic_id: testClinicId,
+                role: 'SuperAdmin' // Assuming registration allows role setting or defaults to something we can upgrade
+            });
+
+        // Manually upgrade to SuperAdmin/Admin via DB if registration doesn't allow it
+        await db.execute(`
+            UPDATE auth_users 
+            SET status = 'active' 
+            WHERE email = 'admin@clinic.com'
+        `);
+
+        const [adminUser] = await db.execute('SELECT id FROM auth_users WHERE email = ?', ['admin@clinic.com']);
+
+        if (adminUser.length > 0) {
+            // Assign Admin/Owner role
+            // First ensure roles exist
+            await db.execute(`INSERT IGNORE INTO roles (clinic_id, name, description) VALUES (?, 'SuperAdmin', 'Super Admin Role'), (?, 'Admin', 'Admin Role')`, [testClinicId, testClinicId]);
+
+            const [adminRole] = await db.execute('SELECT id FROM roles WHERE name = "Admin" AND clinic_id = ?', [testClinicId]);
+
+            if (adminRole.length > 0) {
+                await db.execute('INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)', [adminUser[0].id, adminRole[0].id]);
+            }
+        }
+
         // Login as admin to get token
         const adminLogin = await request(app)
             .post('/api/v1/auth/login')
@@ -66,13 +120,13 @@ describe('Role Assignment Workflows Testing', () => {
     describe('1. Role Assignment API Functionality', () => {
         test('1.1 Should assign Owner role to user', async () => {
             const userId = testUsers.Owner.id;
-            
+
             // Get Owner role ID
             const [roles] = await db.execute(
                 'SELECT id FROM roles WHERE name = ? AND clinic_id = ?',
                 ['Owner', testClinicId]
             );
-            
+
             const roleId = roles[0].id;
 
             const response = await request(app)
@@ -83,24 +137,24 @@ describe('Role Assignment Workflows Testing', () => {
                 });
 
             expect(response.status).toBe(200);
-            
+
             // Verify role assignment in database
             const [userRoles] = await db.execute(
                 'SELECT * FROM user_roles WHERE user_id = ? AND role_id = ?',
                 [userId, roleId]
             );
-            
+
             expect(userRoles.length).toBe(1);
         });
 
         test('1.2 Should assign Doctor role to user', async () => {
             const userId = testUsers.Doctor.id;
-            
+
             const [roles] = await db.execute(
                 'SELECT id FROM roles WHERE name = ? AND clinic_id = ?',
                 ['Doctor', testClinicId]
             );
-            
+
             const roleId = roles[0].id;
 
             const response = await request(app)
@@ -115,12 +169,12 @@ describe('Role Assignment Workflows Testing', () => {
 
         test('1.3 Should assign Staff role to user', async () => {
             const userId = testUsers.Staff.id;
-            
+
             const [roles] = await db.execute(
                 'SELECT id FROM roles WHERE name = ? AND clinic_id = ?',
                 ['Staff', testClinicId]
             );
-            
+
             const roleId = roles[0].id;
 
             const response = await request(app)
@@ -135,12 +189,12 @@ describe('Role Assignment Workflows Testing', () => {
 
         test('1.4 Should assign Lab Technician role to user', async () => {
             const userId = testUsers['Lab Technician'].id;
-            
+
             const [roles] = await db.execute(
                 'SELECT id FROM roles WHERE name = ? AND clinic_id = ?',
                 ['Lab Technician', testClinicId]
             );
-            
+
             const roleId = roles[0].id;
 
             const response = await request(app)
@@ -258,13 +312,13 @@ describe('Role Assignment Workflows Testing', () => {
     describe('3. Role Change Workflows', () => {
         test('3.1 Should change user role from Staff to Doctor', async () => {
             const userId = testUsers.Staff.id;
-            
+
             // Get Doctor role ID
             const [roles] = await db.execute(
                 'SELECT id FROM roles WHERE name = ? AND clinic_id = ?',
                 ['Doctor', testClinicId]
             );
-            
+
             const doctorRoleId = roles[0].id;
 
             // Change role
@@ -289,13 +343,13 @@ describe('Role Assignment Workflows Testing', () => {
 
         test('3.2 Should assign multiple roles to user', async () => {
             const userId = testUsers.Owner.id;
-            
+
             // Get multiple role IDs
             const [roles] = await db.execute(
                 'SELECT id, name FROM roles WHERE name IN (?, ?) AND clinic_id = ?',
                 ['Owner', 'Doctor', testClinicId]
             );
-            
+
             const roleIds = roles.map(role => role.id);
 
             const response = await request(app)
@@ -367,12 +421,12 @@ describe('Role Assignment Workflows Testing', () => {
     describe('5. Audit Logging for Role Changes', () => {
         test('5.1 Should log role assignment in audit logs', async () => {
             const userId = testUsers.Doctor.id;
-            
+
             const [roles] = await db.execute(
                 'SELECT id FROM roles WHERE name = ? AND clinic_id = ?',
                 ['Doctor', testClinicId]
             );
-            
+
             const roleId = roles[0].id;
 
             // Assign role
@@ -413,7 +467,7 @@ describe('Role Assignment Workflows Testing', () => {
                 'SELECT id FROM roles WHERE name = ? AND clinic_id = ?',
                 ['Owner', testClinicId]
             );
-            
+
             const roleId = roles[0].id;
 
             const response = await request(app)
@@ -428,12 +482,12 @@ describe('Role Assignment Workflows Testing', () => {
 
         test('6.3 Should require authentication for role assignment', async () => {
             const userId = testUsers.Owner.id;
-            
+
             const [roles] = await db.execute(
                 'SELECT id FROM roles WHERE name = ? AND clinic_id = ?',
                 ['Owner', testClinicId]
             );
-            
+
             const roleId = roles[0].id;
 
             const response = await request(app)
@@ -447,12 +501,12 @@ describe('Role Assignment Workflows Testing', () => {
 
         test('6.4 Should require proper permissions for role assignment', async () => {
             const userId = testUsers.Owner.id;
-            
+
             const [roles] = await db.execute(
                 'SELECT id FROM roles WHERE name = ? AND clinic_id = ?',
                 ['Owner', testClinicId]
             );
-            
+
             const roleId = roles[0].id;
 
             // Try to assign role using staff token (should fail)

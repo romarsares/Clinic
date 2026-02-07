@@ -25,7 +25,7 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
   queueLimit: 0,
-  charset: 'utf8mb4',
+  charset: 'utf8',
   timezone: '+00:00'
 };
 

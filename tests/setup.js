@@ -39,20 +39,24 @@ afterAll(async () => {
 // Setup test data
 async function setupTestData() {
   try {
+    // Seed Clinic first to avoid FK constraint errors
+    await db.executeQuery(`INSERT IGNORE INTO clinics (id, name, email, address, status, created_at, updated_at) VALUES (999, 'Test Clinic', 'test@clinic.com', '123 Test St', 'active', NOW(), NOW())`);
+
     // Insert test users with proper password hash
     await db.executeQuery(`
       INSERT IGNORE INTO auth_users (id, clinic_id, email, password_hash, full_name, status) 
       VALUES 
       (999, 999, 'testdoctor@test.com', '$2a$10$test.hash.for.testing', 'Test Doctor', 'active'),
-      (998, 999, 'teststaff@test.com', '$2a$10$test.hash.for.testing', 'Test Staff', 'active')
+      (998, 999, 'teststaff@test.com', '$2a$10$test.hash.for.testing', 'Test Staff', 'active'),
+      (1, 999, 'admin@clinic.com', '$2a$10$test.hash.for.testing', 'Admin User', 'active')
     `);
 
     // Insert test roles
     await db.executeQuery(`
-      INSERT IGNORE INTO roles (id, clinic_id, name, description) 
+      INSERT IGNORE INTO roles (id, name, description) 
       VALUES 
-      (999, 999, 'Doctor', 'Test Doctor Role'),
-      (998, 999, 'Staff', 'Test Staff Role')
+      (999, 'Doctor', 'Test Doctor Role'),
+      (998, 'Staff', 'Test Staff Role')
     `);
 
     // Assign roles
@@ -70,20 +74,11 @@ async function setupTestData() {
 // Cleanup test data
 async function cleanupTestData() {
   try {
-    const tables = [
-      'visit_vital_signs',
-      'visit_diagnoses',
-      'visit_notes',
-      'visits',
-      'audit_logs',
-      'user_roles',
-      'roles',
-      'auth_users'
-    ];
-
-    for (const table of tables) {
-      await db.executeQuery(`DELETE FROM ${table} WHERE clinic_id = 999 OR id >= 999`);
-    }
+    // Clean up test data - be careful with tables that don't have clinic_id
+    await db.executeQuery(`DELETE FROM user_roles WHERE user_id >= 999 OR role_id >= 999`);
+    await db.executeQuery(`DELETE FROM roles WHERE id >= 999`);
+    await db.executeQuery(`DELETE FROM auth_users WHERE id >= 999 OR clinic_id = 999`);
+    await db.executeQuery(`DELETE FROM clinics WHERE id = 999`);
 
   } catch (error) {
     console.error('❌ Test data cleanup failed:', error.message);

@@ -8,6 +8,7 @@
 
 const request = require('supertest');
 const app = require('../../src/server');
+const db = require('../../src/config/database');
 
 describe('Phase 7 Security Testing - Authentication & RBAC', () => {
     let tokens = {};
@@ -29,7 +30,7 @@ describe('Phase 7 Security Testing - Authentication & RBAC', () => {
             const response = await request(app)
                 .post('/api/v1/auth/login')
                 .send({ email: user.email, password: user.password });
-            
+
             if (response.status === 200) {
                 tokens[role] = response.body.token;
             }
@@ -39,24 +40,24 @@ describe('Phase 7 Security Testing - Authentication & RBAC', () => {
     describe('7.1.1 Authentication Security Testing', () => {
         test('7.1.1.1 JWT token expiration validation', async () => {
             const expiredToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
-            
+
             const response = await request(app)
                 .get('/api/v1/patients')
                 .set('Authorization', `Bearer ${expiredToken}`);
-            
+
             expect(response.status).toBe(401);
         });
 
         test('7.1.1.2 Rate limiting on login attempts', async () => {
             const loginAttempts = [];
-            
+
             for (let i = 0; i < 6; i++) {
                 const attempt = request(app)
                     .post('/api/v1/auth/login')
                     .send({ email: 'test@test.com', password: 'wrongpassword' });
                 loginAttempts.push(attempt);
             }
-            
+
             const responses = await Promise.all(loginAttempts);
             expect(responses[5].status).toBe(429);
         });
@@ -67,7 +68,7 @@ describe('Phase 7 Security Testing - Authentication & RBAC', () => {
             const response = await request(app)
                 .get('/api/v1/patients')
                 .set('Authorization', `Bearer ${tokens.owner}`);
-            
+
             expect(response.status).not.toBe(403);
         });
 
@@ -75,7 +76,7 @@ describe('Phase 7 Security Testing - Authentication & RBAC', () => {
             const response = await request(app)
                 .get('/api/v1/visits')
                 .set('Authorization', `Bearer ${tokens.doctor}`);
-            
+
             expect(response.status).not.toBe(403);
         });
 
@@ -84,14 +85,13 @@ describe('Phase 7 Security Testing - Authentication & RBAC', () => {
                 .post('/api/v1/visits/1/diagnoses')
                 .set('Authorization', `Bearer ${tokens.staff}`)
                 .send({ diagnosis: 'Test Diagnosis' });
-            
+
             expect(response.status).toBe(403);
         });
     });
 
     afterAll(async () => {
         // Cleanup test data
+        await db.closePool();
     });
 });
-
-module.exports = { testUsers, tokens };

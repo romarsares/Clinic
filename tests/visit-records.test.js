@@ -36,10 +36,23 @@ describe('Visit Records Module - Phase 2 Step 1', () => {
       (902, 999, 'dr@test.com', 'hash', 'Test Doctor', 'active'),
       (903, 999, 'st@test.com', 'hash', 'Test Staff', 'active')`);
 
+    // Need service types for appointments
+    await db.executeQuery(`INSERT IGNORE INTO service_types (id, clinic_id, name, type, duration, price, category, status) VALUES 
+      (10, 999, 'General Checkup', 'consultation', 30, 50.00, 'consultation', 'active')`);
+
+    // Insert test patients
+    await db.executeQuery(`INSERT IGNORE INTO patients (id, clinic_id, first_name, last_name, email, phone, birth_date, gender, address, status, created_at, updated_at) VALUES 
+      (1, 999, 'Test', 'Patient', 'patient@test.com', '1234567890', '1990-01-01', 'Male', '123 Test Ave', 'active', NOW(), NOW())`);
+
+    // Insert test appointments
+    await db.executeQuery(`INSERT IGNORE INTO appointments (id, clinic_id, patient_id, doctor_id, type_id, appointment_date, start_time, end_time, status, created_at, updated_at) VALUES 
+      (1, 999, 1, 902, 10, CURDATE(), '09:00:00', '09:30:00', 'scheduled', NOW(), NOW())`);
+
     // Also need roles and user_roles for the middleware's select query
     await db.executeQuery(`INSERT IGNORE INTO roles (id, clinic_id, name) VALUES (10, 999, 'Doctor'), (11, 999, 'Staff')`);
     await db.executeQuery(`INSERT IGNORE INTO user_roles (user_id, role_id) SELECT 902, id FROM roles WHERE clinic_id = 999 AND name = 'Doctor'`);
     await db.executeQuery(`INSERT IGNORE INTO user_roles (user_id, role_id) SELECT 903, id FROM roles WHERE clinic_id = 999 AND name = 'Staff'`);
+
   });
 
   afterAll(async () => {
@@ -51,8 +64,9 @@ describe('Visit Records Module - Phase 2 Step 1', () => {
     test('should create a new visit with valid data', async () => {
       const visitData = {
         appointment_id: 1,
+        appointment_id: 1,
         patient_id: 1,
-        doctor_id: 1
+        doctor_id: 902
       };
 
       const response = await request(app)
@@ -70,7 +84,7 @@ describe('Visit Records Module - Phase 2 Step 1', () => {
       const visitData = {
         appointment_id: 1,
         patient_id: 1,
-        doctor_id: 1
+        doctor_id: 902
       };
 
       await request(app)
@@ -360,6 +374,10 @@ async function cleanupTestData() {
     await db.execute('DELETE FROM user_roles WHERE user_id IN (902, 903)');
     await db.execute('DELETE FROM auth_users WHERE id IN (902, 903)');
     await db.execute('DELETE FROM roles WHERE clinic_id = 999');
+    await db.execute('DELETE FROM roles WHERE clinic_id = 999');
+    await db.execute('DELETE FROM appointments WHERE clinic_id = 999');
+    await db.execute('DELETE FROM patients WHERE clinic_id = 999');
+    await db.execute('DELETE FROM service_types WHERE clinic_id = 999');
     await db.execute('DELETE FROM clinics WHERE id = 999');
   } catch (error) {
     console.error('Test cleanup error:', error);
