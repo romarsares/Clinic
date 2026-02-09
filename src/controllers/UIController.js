@@ -15,7 +15,7 @@ class UIController {
      */
     static serveDashboard(req, res) {
         // For now, serve the main dashboard - role detection will be handled by JavaScript
-        const dashboardPath = path.join(__dirname, '../../public/views/dashboard-nextui.html');
+        const dashboardPath = path.join(__dirname, '../../public/views/dashboard.html');
         res.sendFile(dashboardPath);
     }
 
@@ -47,7 +47,7 @@ class UIController {
      * Serve login page
      */
     static serveLogin(req, res) {
-        const loginPath = path.join(__dirname, '../../public/views/login-nextui.html');
+        const loginPath = path.join(__dirname, '../../public/views/login.html');
         res.sendFile(loginPath);
     }
 
@@ -55,7 +55,7 @@ class UIController {
      * Serve patients page
      */
     static servePatients(req, res) {
-        const patientsPath = path.join(__dirname, '../../public/views/patients-nextui.html');
+        const patientsPath = path.join(__dirname, '../../public/views/patients.html');
         res.sendFile(patientsPath);
     }
 
@@ -63,7 +63,7 @@ class UIController {
      * Serve appointments page
      */
     static serveAppointments(req, res) {
-        const appointmentsPath = path.join(__dirname, '../../public/views/appointments-nextui.html');
+        const appointmentsPath = path.join(__dirname, '../../public/views/appointments.html');
         res.sendFile(appointmentsPath);
     }
 
@@ -71,7 +71,7 @@ class UIController {
      * Serve visits page
      */
     static serveVisits(req, res) {
-        const visitsPath = path.join(__dirname, '../../public/views/visits-nextui.html');
+        const visitsPath = path.join(__dirname, '../../public/views/visits.html');
         res.sendFile(visitsPath);
     }
 
@@ -79,7 +79,7 @@ class UIController {
      * Serve users page
      */
     static serveUsers(req, res) {
-        const usersPath = path.join(__dirname, '../../public/views/users-nextui.html');
+        const usersPath = path.join(__dirname, '../../public/views/users.html');
         res.sendFile(usersPath);
     }
 
@@ -121,7 +121,7 @@ class UIController {
      * Serve settings page (placeholder)
      */
     static serveSettings(req, res) {
-        const settingsPath = path.join(__dirname, '../../public/views/settings-nextui.html');
+        const settingsPath = path.join(__dirname, '../../public/views/settings.html');
         res.sendFile(settingsPath);
     }
 }
