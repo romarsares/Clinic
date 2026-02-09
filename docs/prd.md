@@ -297,24 +297,24 @@ Clinics often struggle with:
 ---
 
 ## 12. References
-- `claude.md` – Laws & AI constraints (needs update for clinical features)
-- `tasks.md` – Phase tasks (needs expansion for clinical phases)
-- `decisions.md` – Log choices  
-- `risks.md` – Track known weaknesses (needs clinical risk assessment)
+- `tasks/README.md` – Task navigation and phase overview
+- `tasks/phase-*.md` – Individual phase documentation (11 phases)
+- `claude.md` – Laws & AI constraints
+- `decisions.md` – Architecture decisions log
+- `risk.md` – Risk assessment and mitigation
 - `clinic_saas_compliance.md` – Compliance requirements
+- `CURRENT_POSITION.md` – Real-time project status
+- `TEST_RECOVERY_SUMMARY.md` – Test coverage tracking
 
 ---
 
 **End of Updated PRD**
 
-**IMPORTANT NOTES:**
-1. This PRD now includes full clinical capabilities (diagnosis, patient history, labs)
-2. The following files need to be updated to align:
-   - `claude.md` - Remove restrictions on clinical data
-   - `tasks.md` - Add clinical feature phases
-   - `clinic_saas_mysql_ddl.md` - Keep diagnosis/treatment in visit_notes
-   - `decisions.md` - Reverse 2026-01-15 decision about clinical terms
-   - `clinic_saas_api_endpoints.md` - Add lab and medical history endpoints
-   - `clinic_saas_compliance.md` - Add clinical data protection requirements
-3. Security and compliance requirements are more stringent with clinical data
-4. This positions the product as a comprehensive clinic solution, not just operations
+**RECENT UPDATES (2026-02-09):**
+1. ✅ Task.md reorganized into 11 phase files for better navigation
+2. ✅ Test recovery in progress: 38/108 tests passing (35%)
+3. ✅ Phase 6 (UI/UX Enhancement) at 50% completion
+4. ✅ Auth-RBAC tests complete (5/5 passing)
+5. ✅ Test infrastructure and user management verified
+6. ⚠️ Phases 1-5 marked as "Built but Unverified" pending test completion
+7. 🎯 Current focus: Reach 50% test coverage before resuming Phase 6

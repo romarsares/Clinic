@@ -1,0 +1,54 @@
+docs: update prd.md and risk.md to reflect recent changes
+
+## Summary
+Updated key documentation files to reflect task.md reorganization, test recovery
+progress, and current project status.
+
+## Files Updated
+
+### prd.md
+- Updated references section to point to new task structure
+- Changed tasks.md → tasks/README.md and tasks/phase-*.md
+- Added recent updates section (2026-02-09)
+- Added references to CURRENT_POSITION.md and TEST_RECOVERY_SUMMARY.md
+- Documented test recovery status (35% coverage)
+- Noted Phase 6 at 50% completion
+- Marked Phases 1-5 as "Built but Unverified"
+
+### risk.md
+- Added NEW RISK: R-QA-03 - Insufficient Test Coverage (High severity)
+- Updated risk status changes for recent progress
+- Documented test recovery effort (Phase 5.5)
+- Added project changes section
+- Noted auth-RBAC tests complete (5/5 passing)
+- Documented task.md reorganization impact
+
+## Key Changes
+
+### Test Coverage Risk
+- Identified gap: Only 35% tests passing (38/108)
+- Severity: High
+- Mitigation: Immediate test recovery in progress
+- Target: 50% coverage before resuming Phase 6
+
+### Documentation Structure
+- Task.md split into 11 organized phase files
+- Better navigation and maintainability
+- Reduced R-PR-02 risk (phase skipping)
+
+### Status Transparency
+- Reality-based tracking implemented
+- Phases 1-5 marked as unverified
+- Test infrastructure created
+- Auth-RBAC security validated
+
+## Next Steps
+- Continue test recovery to reach 50% coverage
+- Update decisions.md with recent architecture decisions
+- Update claude.md if needed
+- Resume Phase 6 after test milestone
+
+## Impact
+- Documentation now reflects actual project status
+- Risks properly tracked and mitigated
+- Clear path forward established
