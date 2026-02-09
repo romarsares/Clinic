@@ -11,15 +11,15 @@ describe('Appointment Types API', () => {
         const loginResponse = await request(app)
             .post('/api/v1/auth/login')
             .send({
-                email: 'admin@clinic.com',
-                password: 'admin12354'
+                email: 'owner@test.com',
+                password: 'TestPass123!'
             });
 
         authToken = loginResponse.body.token;
     });
 
     afterAll(async () => {
-        await db.close();
+        await db.closePool();
     });
 
     describe('GET /api/v1/appointment-types', () => {
