@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Decoder</title>
+</head>
+<body>
+    <h2>Current Token Info</h2>
+    <pre id="output"></pre>
+    <button onclick="clearAndReload()">Clear Token & Reload</button>
+    
+    <script>
+        const token = localStorage.getItem('clinic_token');
+        const output = document.getElementById('output');
+        
+        if (!token) {
+            output.textContent = 'No token found in localStorage';
+        } else {
+            try {
+                // Decode JWT (just the payload, not verifying signature)
+                const parts = token.split('.');
+                const payload = JSON.parse(atob(parts[1]));
+                
+                output.textContent = 'Token Payload:\n' + JSON.stringify(payload, null, 2);
+                
+                // Also show what user data we have
+                const userData = localStorage.getItem('clinic_user');
+                if (userData) {
+                    output.textContent += '\n\nUser Data:\n' + JSON.stringify(JSON.parse(userData), null, 2);
+                }
+            } catch (e) {
+                output.textContent = 'Error decoding token: ' + e.message;
+            }
+        }
+        
+        function clearAndReload() {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert('Cleared! Redirecting to login...');
+            window.location.href = '/views/login.html';
+        }
+    </script>
+</body>
+</html>

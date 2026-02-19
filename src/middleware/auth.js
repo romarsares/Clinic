@@ -58,15 +58,15 @@ const authenticateToken = async (req, res, next) => {
     // Check if user has clinic association (except for SuperAdmin)
     if (!user.clinic_id && (!user.roles || !user.roles.includes('SuperAdmin'))) {
       console.log('❌ AUTH FAILED: User has no clinic_id');
-      console.log('User:', user.email, 'ID:', user.id, 'Clinic:', user.clinic_id);
+      console.log('User:', user.email, 'ID:', user.id, 'Clinic:', user.clinic_id, 'Roles:', user.roles);
       return res.status(403).json({
         success: false,
-        message: 'Access denied: No clinic association. Please contact your administrator.'
+        message: 'Access denied: No clinic association'
       });
     }
 
     // Debug log
-    console.log('✓ AUTH SUCCESS:', user.email, 'Clinic:', user.clinic_id, 'Roles:', user.roles);
+    console.log('✓ AUTH SUCCESS:', user.email, 'Clinic:', user.clinic_id, 'Roles:', user.roles || 'None');
 
     // Add user context to request
     req.user = {

@@ -132,6 +132,18 @@ router.delete('/:id/photo',
 );
 
 /**
+ * @route   GET /api/v1/patients/:id/history/summary
+ * @desc    Get patient medical summary
+ * @access  Private (All clinic staff)
+ */
+router.get('/:id/history/summary',
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician', 'Super User']),
+    logClinicalAccess('patient_medical_summary'),
+    auditLog('patient', 'medical_summary'),
+    (req, res) => patientController.getPatientSummary(req, res)
+);
+
+/**
  * @route   GET /api/v1/patients/:id/photo
  * @desc    Get patient photo
  * @access  Private (All clinic staff)

@@ -79,7 +79,7 @@ router.use(`${API_VERSION}/users`, userPreferencesRoutes);
  * Patient Management Routes
  * Handles patient demographics and parent-child relationships
  */
-router.use(`${API_VERSION}/patients`, enforceTenantIsolation, patientRoutes);
+router.use(`${API_VERSION}/patients`, patientRoutes);
 
 /**
  * Appointment Management Routes

@@ -18,13 +18,13 @@ class PatientController {
             const clinicId = req.user.clinic_id;
             const { page = 1, limit = 20, type = 'all' } = req.query;
             
-            const patients = await this.patientModel.listByClinic(clinicId, {
+            const result = await this.patientModel.listByClinic(clinicId, {
                 page: parseInt(page),
                 limit: parseInt(limit),
                 type
             });
             
-            res.json({ success: true, data: patients });
+            res.json({ success: true, data: result.patients, total: result.total });
         } catch (error) {
             console.error('Error listing patients:', error);
             res.status(500).json({ success: false, message: 'Failed to list patients' });
@@ -212,6 +212,50 @@ class PatientController {
         }
     }
 
+    async getPatientSummary(req, res) {
+        try {
+            const patient = await this.patientModel.getById(req.params.id);
+            if (!patient || patient.clinic_id !== req.user.clinic_id) {
+                return res.status(404).json({ success: false, message: 'Patient not found' });
+            }
+
+            const summary = await this.getPatientSummary(req.params.id, req.user.clinic_id);
+            res.json({ success: true, data: summary });
+        } catch (error) {
+            console.error('Error fetching patient summary:', error);
+            res.status(500).json({ success: false, message: 'Failed to fetch patient summary' });
+        }
+    }
+
+    async getPatientSummary(patientId, clinicId) {
+        try {
+            const [visits] = await db.execute(
+                'SELECT COUNT(*) as total_visits, MAX(visit_date) as last_visit FROM visits WHERE patient_id = ? AND clinic_id = ? AND deleted_at IS NULL',
+                [patientId, clinicId]
+            );
+            
+            const [diagnoses] = await db.execute(
+                'SELECT diagnosis_name, COUNT(*) as count FROM visit_diagnoses vd JOIN visits v ON vd.visit_id = v.id WHERE v.patient_id = ? AND v.clinic_id = ? AND v.deleted_at IS NULL GROUP BY diagnosis_name ORDER BY count DESC LIMIT 3',
+                [patientId, clinicId]
+            );
+            
+            const [allergies] = await db.execute(
+                'SELECT allergy_name FROM patient_allergies WHERE patient_id = ? AND deleted_at IS NULL',
+                [patientId]
+            );
+            
+            return {
+                totalVisits: visits[0]?.total_visits || 0,
+                lastVisit: visits[0]?.last_visit,
+                commonDiagnoses: diagnoses.map(d => d.diagnosis_name),
+                allergies: allergies.map(a => a.allergy_name)
+            };
+        } catch (error) {
+            console.error('Error getting patient summary:', error);
+            throw error;
+        }
+    }
+
     async deletePatient(req, res) {
         try {
             const patient = await this.patientModel.getById(req.params.id);
@@ -259,7 +303,7 @@ class PatientController {
             param('id').isInt().withMessage('Valid parent ID is required'),
             body('first_name').trim().isLength({ min: 1 }).withMessage('First name is required'),
             body('last_name').trim().isLength({ min: 1 }).withMessage('Last name is required'),
-            body('date_of_birth').isISO8601().withMessage('Valid date of birth is required'),
+            body('birth_date').isISO8601().withMessage('Valid birth date is required'),
             body('gender').isIn(['male', 'female', 'other']).withMessage('Valid gender is required')
         ];
     }

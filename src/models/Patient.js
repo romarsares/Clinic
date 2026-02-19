@@ -19,21 +19,23 @@ class Patient {
      */
     async create(patientData) {
         const {
-            clinic_id, first_name, last_name, date_of_birth, gender, patient_type = 'adult',
-            contact_number, email, address, emergency_contact_name, emergency_contact_number
+            clinic_id, first_name, last_name, birth_date, gender,
+            contact_number = null, email = null, notes = null, parent_patient_id = null
         } = patientData;
+
+        const full_name = `${first_name} ${last_name}`;
+        const patient_code = `P${Date.now()}`;
 
         const query = `
             INSERT INTO patients (
-                clinic_id, first_name, last_name, date_of_birth, gender, patient_type,
-                contact_number, email, address, emergency_contact_name, emergency_contact_number,
-                status, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW(), NOW())
+                clinic_id, patient_code, full_name, first_name, last_name, birth_date, gender,
+                contact_number, email, notes, parent_patient_id, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         `;
 
         const [result] = await this.db.execute(query, [
-            clinic_id, first_name, last_name, date_of_birth, gender, patient_type,
-            contact_number, email, address, emergency_contact_name, emergency_contact_number
+            clinic_id, patient_code, full_name, first_name, last_name, birth_date, gender,
+            contact_number, email, notes, parent_patient_id
         ]);
 
         return this.getById(result.insertId);
@@ -43,29 +45,8 @@ class Patient {
      * Create child patient with parent relationship
      */
     async createChild(parentId, childData) {
-        const connection = await this.db.getConnection();
-        
-        try {
-            await connection.beginTransaction();
-            
-            // Create child patient
-            const child = await this.create(childData);
-            
-            // Create parent-child relationship
-            const relationshipQuery = `
-                INSERT INTO patient_relationships (parent_id, child_id, relationship_type, created_at)
-                VALUES (?, ?, 'parent_child', NOW())
-            `;
-            await connection.execute(relationshipQuery, [parentId, child.id]);
-            
-            await connection.commit();
-            return child;
-        } catch (error) {
-            await connection.rollback();
-            throw error;
-        } finally {
-            connection.release();
-        }
+        childData.parent_patient_id = parentId;
+        return this.create(childData);
     }
 
     /**
@@ -74,10 +55,10 @@ class Patient {
     async getById(id) {
         const query = `
             SELECT p.*, c.name as clinic_name,
-                   TIMESTAMPDIFF(YEAR, p.date_of_birth, CURDATE()) as age
+                   TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age
             FROM patients p
             LEFT JOIN clinics c ON p.clinic_id = c.id
-            WHERE p.id = ? AND p.status != 'deleted'
+            WHERE p.id = ? AND p.deleted_at IS NULL
         `;
         const [rows] = await this.db.execute(query, [id]);
         return rows[0] || null;
@@ -90,52 +71,59 @@ class Patient {
         const { page = 1, limit = 20, type = 'all' } = options;
         const offset = (page - 1) * limit;
 
-        let whereClause = 'WHERE p.clinic_id = ? AND p.status != "deleted"';
-        let params = [clinicId];
+        let whereClause = 'WHERE p.clinic_id = ? AND p.deleted_at IS NULL';
+        const queryParams = [clinicId];
 
-        if (type !== 'all') {
-            whereClause += ' AND p.patient_type = ?';
-            params.push(type);
+        if (type === 'parent') {
+            whereClause += ' AND p.parent_patient_id IS NULL';
+        } else if (type === 'child') {
+            whereClause += ' AND p.parent_patient_id IS NOT NULL';
         }
 
         const query = `
-            SELECT p.id, p.first_name, p.last_name, p.date_of_birth, p.gender, p.patient_type,
-                   p.contact_number, p.email, p.status, p.created_at,
-                   TIMESTAMPDIFF(YEAR, p.date_of_birth, CURDATE()) as age,
-                   COUNT(pr.child_id) as children_count
+            SELECT p.id, p.patient_code, p.full_name, p.first_name, p.last_name, p.birth_date, 
+                   p.gender, p.contact_number, p.email, p.created_at,
+                   TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age
             FROM patients p
-            LEFT JOIN patient_relationships pr ON p.id = pr.parent_id
             ${whereClause}
-            GROUP BY p.id
             ORDER BY p.created_at DESC
             LIMIT ? OFFSET ?
         `;
 
-        params.push(limit, offset);
-        const [rows] = await this.db.execute(query, params);
-        return rows;
+        const [patients] = await this.db.query(query, [clinicId, parseInt(limit), parseInt(offset)]);
+        
+        const [countResult] = await this.db.query(
+            `SELECT COUNT(*) as total FROM patients p ${whereClause}`,
+            queryParams
+        );
+        
+        return { patients, total: countResult[0].total };
     }
 
     /**
      * Update patient information
      */
-    async update(id, updateData) {
+    async update(id, updateData, clinicId) {
         const {
-            first_name, last_name, contact_number, email, address,
-            emergency_contact_name, emergency_contact_number
+            first_name, last_name, contact_number, email, notes
         } = updateData;
 
-        const query = `
-            UPDATE patients 
-            SET first_name = ?, last_name = ?, contact_number = ?, email = ?, address = ?,
-                emergency_contact_name = ?, emergency_contact_number = ?, updated_at = NOW()
-            WHERE id = ?
-        `;
+        const full_name = first_name && last_name ? `${first_name} ${last_name}` : undefined;
+        const fields = [];
+        const values = [];
 
-        await this.db.execute(query, [
-            first_name, last_name, contact_number, email, address,
-            emergency_contact_name, emergency_contact_number, id
-        ]);
+        if (first_name) { fields.push('first_name = ?'); values.push(first_name); }
+        if (last_name) { fields.push('last_name = ?'); values.push(last_name); }
+        if (full_name) { fields.push('full_name = ?'); values.push(full_name); }
+        if (contact_number !== undefined) { fields.push('contact_number = ?'); values.push(contact_number); }
+        if (email !== undefined) { fields.push('email = ?'); values.push(email); }
+        if (notes !== undefined) { fields.push('notes = ?'); values.push(notes); }
+        
+        fields.push('updated_at = NOW()');
+        values.push(id, clinicId);
+
+        const query = `UPDATE patients SET ${fields.join(', ')} WHERE id = ? AND clinic_id = ?`;
+        await this.db.execute(query, values);
 
         return this.getById(id);
     }
@@ -147,20 +135,20 @@ class Patient {
         const { limit = 10 } = options;
         
         const query = `
-            SELECT p.id, p.first_name, p.last_name, p.date_of_birth, p.gender, p.patient_type,
-                   p.contact_number, p.email,
-                   TIMESTAMPDIFF(YEAR, p.date_of_birth, CURDATE()) as age
+            SELECT p.id, p.patient_code, p.full_name, p.first_name, p.last_name, p.birth_date, 
+                   p.gender, p.contact_number, p.email,
+                   TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age
             FROM patients p
             WHERE p.clinic_id = ? 
-            AND p.status != 'deleted'
-            AND (p.first_name LIKE ? OR p.last_name LIKE ? OR p.contact_number LIKE ? OR p.email LIKE ?)
+            AND p.deleted_at IS NULL
+            AND (p.first_name LIKE ? OR p.last_name LIKE ? OR p.full_name LIKE ? OR p.contact_number LIKE ? OR p.email LIKE ? OR p.patient_code LIKE ?)
             ORDER BY p.first_name, p.last_name
             LIMIT ?
         `;
 
         const searchPattern = `%${searchTerm}%`;
-        const [rows] = await this.db.execute(query, [
-            clinicId, searchPattern, searchPattern, searchPattern, searchPattern, limit
+        const [rows] = await this.db.query(query, [
+            clinicId, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, limit
         ]);
 
         return rows;
@@ -169,35 +157,34 @@ class Patient {
     /**
      * Get patient's children
      */
-    async getChildren(parentId) {
+    async getChildren(parentId, clinicId) {
         const query = `
-            SELECT p.id, p.first_name, p.last_name, p.date_of_birth, p.gender,
-                   p.contact_number, p.email, p.status,
-                   TIMESTAMPDIFF(YEAR, p.date_of_birth, CURDATE()) as age
+            SELECT p.id, p.patient_code, p.full_name, p.first_name, p.last_name, p.birth_date, 
+                   p.gender, p.contact_number, p.email,
+                   TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()) as age
             FROM patients p
-            INNER JOIN patient_relationships pr ON p.id = pr.child_id
-            WHERE pr.parent_id = ? AND p.status != 'deleted'
-            ORDER BY p.date_of_birth DESC
+            WHERE p.parent_patient_id = ? AND p.clinic_id = ? AND p.deleted_at IS NULL
+            ORDER BY p.birth_date DESC
         `;
 
-        const [rows] = await this.db.execute(query, [parentId]);
+        const [rows] = await this.db.execute(query, [parentId, clinicId]);
         return rows;
     }
 
     /**
      * Get patient's parent
      */
-    async getParent(childId) {
+    async getParent(childId, clinicId) {
         const query = `
-            SELECT p.id, p.first_name, p.last_name, p.date_of_birth, p.gender,
-                   p.contact_number, p.email, p.status,
-                   TIMESTAMPDIFF(YEAR, p.date_of_birth, CURDATE()) as age
-            FROM patients p
-            INNER JOIN patient_relationships pr ON p.id = pr.parent_id
-            WHERE pr.child_id = ? AND p.status != 'deleted'
+            SELECT parent.id, parent.patient_code, parent.full_name, parent.first_name, parent.last_name, 
+                   parent.birth_date, parent.gender, parent.contact_number, parent.email,
+                   TIMESTAMPDIFF(YEAR, parent.birth_date, CURDATE()) as age
+            FROM patients child
+            INNER JOIN patients parent ON child.parent_patient_id = parent.id
+            WHERE child.id = ? AND child.clinic_id = ? AND parent.deleted_at IS NULL
         `;
 
-        const [rows] = await this.db.execute(query, [childId]);
+        const [rows] = await this.db.execute(query, [childId, clinicId]);
         return rows[0] || null;
     }
 
@@ -215,12 +202,12 @@ class Patient {
      */
     async getClinicStats(clinicId) {
         const queries = {
-            totalPatients: 'SELECT COUNT(*) as count FROM patients WHERE clinic_id = ? AND status != "deleted"',
-            adultPatients: 'SELECT COUNT(*) as count FROM patients WHERE clinic_id = ? AND patient_type = "adult" AND status != "deleted"',
-            childPatients: 'SELECT COUNT(*) as count FROM patients WHERE clinic_id = ? AND patient_type = "child" AND status != "deleted"',
+            totalPatients: 'SELECT COUNT(*) as count FROM patients WHERE clinic_id = ? AND deleted_at IS NULL',
+            parentPatients: 'SELECT COUNT(*) as count FROM patients WHERE clinic_id = ? AND parent_patient_id IS NULL AND deleted_at IS NULL',
+            childPatients: 'SELECT COUNT(*) as count FROM patients WHERE clinic_id = ? AND parent_patient_id IS NOT NULL AND deleted_at IS NULL',
             newPatientsThisMonth: `
                 SELECT COUNT(*) as count FROM patients 
-                WHERE clinic_id = ? AND status != "deleted"
+                WHERE clinic_id = ? AND deleted_at IS NULL
                 AND YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())
             `
         };
@@ -242,16 +229,16 @@ class Patient {
         const query = `
             SELECT 
                 CASE 
-                    WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 1 THEN 'Infant (0-1)'
-                    WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 5 THEN 'Toddler (1-4)'
-                    WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 13 THEN 'Child (5-12)'
-                    WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 18 THEN 'Teen (13-17)'
-                    WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 65 THEN 'Adult (18-64)'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 1 THEN 'Infant (0-1)'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 5 THEN 'Toddler (1-4)'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 13 THEN 'Child (5-12)'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 18 THEN 'Teen (13-17)'
+                    WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 65 THEN 'Adult (18-64)'
                     ELSE 'Senior (65+)'
                 END as age_group,
                 COUNT(*) as count
             FROM patients 
-            WHERE clinic_id = ? AND status != 'deleted'
+            WHERE clinic_id = ? AND deleted_at IS NULL
             GROUP BY age_group
             ORDER BY count DESC
         `;
@@ -263,9 +250,9 @@ class Patient {
     /**
      * Soft delete patient
      */
-    async softDelete(id) {
-        const query = 'UPDATE patients SET status = "deleted", updated_at = NOW() WHERE id = ?';
-        await this.db.execute(query, [id]);
+    async softDelete(id, clinicId) {
+        const query = 'UPDATE patients SET deleted_at = NOW(), updated_at = NOW() WHERE id = ? AND clinic_id = ?';
+        await this.db.execute(query, [id, clinicId]);
         return true;
     }
 }
