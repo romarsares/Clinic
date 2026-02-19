@@ -10,13 +10,18 @@ const db = require('../config/database');
  */
 async function checkUserPermission(userId, clinicId, permissionKey) {
     try {
-        // Super User has all permissions
-        const [user] = await db.execute(
-            'SELECT roles FROM auth_users WHERE id = ? AND clinic_id = ?',
-            [userId, clinicId]
-        );
+        // Check if user has Super User role via user_roles table
+        const [userRoles] = await db.execute(`
+            SELECT r.name 
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE ur.user_id = ?
+        `, [userId]);
         
-        if (user.length && JSON.parse(user[0].roles || '[]').includes('Super User')) {
+        const roles = userRoles.map(row => row.name);
+        
+        // Super User has all permissions
+        if (roles.includes('Super User') || roles.includes('SuperAdmin')) {
             return true;
         }
 
@@ -64,13 +69,18 @@ function requirePermission(permissionKey) {
  */
 async function getUserPermissions(userId, clinicId) {
     try {
-        // Super User has all permissions
-        const [user] = await db.execute(
-            'SELECT roles FROM auth_users WHERE id = ? AND clinic_id = ?',
-            [userId, clinicId]
-        );
+        // Check if user has Super User role
+        const [userRoles] = await db.execute(`
+            SELECT r.name 
+            FROM user_roles ur
+            JOIN roles r ON ur.role_id = r.id
+            WHERE ur.user_id = ?
+        `, [userId]);
         
-        if (user.length && JSON.parse(user[0].roles || '[]').includes('Super User')) {
+        const roles = userRoles.map(row => row.name);
+        
+        // Super User has all permissions
+        if (roles.includes('Super User') || roles.includes('SuperAdmin')) {
             return [
                 'patient.add', 'patient.edit', 'patient.view', 'patient.delete',
                 'appointment.create', 'appointment.edit', 'appointment.view', 'appointment.cancel',

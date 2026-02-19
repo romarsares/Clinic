@@ -1,0 +1,4 @@
+<div id="nav-container"></div>
+<div id="top-nav-container"></div>
+<script src="/js/shared-nav.js"></script>
+<script>initSharedComponents('pageName');</script>

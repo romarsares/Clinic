@@ -24,7 +24,6 @@ router.use(authenticateToken);
  * @access  Private (All clinic staff)
  */
 router.get('/',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician', 'Super User']),
     auditLog('patient', 'list'),
     (req, res) => patientController.listPatients(req, res)
 );
@@ -35,7 +34,6 @@ router.get('/',
  * @access  Private (Staff, Admin, Owner)
  */
 router.post('/',
-    requireRole(['Owner', 'Admin', 'Staff', 'Super User']),
     PatientController.getCreateValidation(),
     auditLog('patient', 'create'),
     (req, res) => patientController.createPatient(req, res)

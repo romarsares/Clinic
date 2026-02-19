@@ -55,10 +55,18 @@ const authenticateToken = async (req, res, next) => {
 
     const user = users[0];
 
-    // Debug log for RBAC troubleshooting
-    if (process.env.NODE_ENV === 'test') {
-      console.log(`[AUTH DEBUG] User: ${user.email}, Clinic: ${user.clinic_id}, Roles: ${user.roles}`);
+    // Check if user has clinic association (except for SuperAdmin)
+    if (!user.clinic_id && (!user.roles || !user.roles.includes('SuperAdmin'))) {
+      console.log('❌ AUTH FAILED: User has no clinic_id');
+      console.log('User:', user.email, 'ID:', user.id, 'Clinic:', user.clinic_id);
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: No clinic association. Please contact your administrator.'
+      });
     }
+
+    // Debug log
+    console.log('✓ AUTH SUCCESS:', user.email, 'Clinic:', user.clinic_id, 'Roles:', user.roles);
 
     // Add user context to request
     req.user = {
