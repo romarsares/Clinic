@@ -114,7 +114,7 @@ class ClinicController {
                 SELECT 
                     (SELECT COUNT(*) FROM auth_users WHERE clinic_id = ?) as total_users,
                     (SELECT COUNT(*) FROM auth_users WHERE clinic_id = ? AND status = 'active') as active_users,
-                    (SELECT COUNT(*) FROM patients WHERE clinic_id = ?) as total_patients,
+                    (SELECT COUNT(*) FROM patients WHERE clinic_id = ? AND is_active = 1) as total_patients,
                     (SELECT COUNT(*) FROM visits WHERE clinic_id = ? AND DATE(created_at) = CURDATE()) as today_visits,
                     (SELECT COUNT(*) FROM appointments WHERE clinic_id = ? AND DATE(appointment_date) = CURDATE()) as today_appointments,
                     (SELECT COALESCE(SUM(total_amount), 0) FROM bills WHERE clinic_id = ? AND DATE(created_at) = CURDATE()) as today_revenue

@@ -179,12 +179,21 @@ class PatientController {
     async getPhoto(req, res) {
         try {
             const [rows] = await db.execute(
-                'SELECT photo_data, photo_filename, photo_mimetype FROM patients WHERE id = ? AND clinic_id = ?',
-                [req.params.id, req.user.clinic_id]
+                'SELECT photo_data, photo_filename, photo_mimetype FROM patients WHERE id = ?',
+                [req.params.id]
             );
 
             if (rows.length === 0 || !rows[0].photo_data) {
-                return res.status(404).json({ success: false, message: 'Photo not found' });
+                // Return default avatar SVG
+                const defaultAvatar = Buffer.from(
+                    '<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                    '<circle cx="50" cy="50" r="50" fill="#F4F4F5"/>' +
+                    '<circle cx="50" cy="40" r="15" fill="#9999AA"/>' +
+                    '<path d="M75 80C75 66.1929 63.8071 55 50 55C36.1929 55 25 66.1929 25 80" fill="#9999AA"/>' +
+                    '</svg>'
+                );
+                res.set('Content-Type', 'image/svg+xml');
+                return res.send(defaultAvatar);
             }
 
             res.set({
@@ -195,7 +204,15 @@ class PatientController {
             res.send(rows[0].photo_data);
         } catch (error) {
             console.error('Error getting photo:', error);
-            res.status(500).json({ success: false, message: 'Failed to get photo' });
+            const defaultAvatar = Buffer.from(
+                '<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<circle cx="50" cy="50" r="50" fill="#F4F4F5"/>' +
+                '<circle cx="50" cy="40" r="15" fill="#9999AA"/>' +
+                '<path d="M75 80C75 66.1929 63.8071 55 50 55C36.1929 55 25 66.1929 25 80" fill="#9999AA"/>' +
+                '</svg>'
+            );
+            res.set('Content-Type', 'image/svg+xml');
+            res.send(defaultAvatar);
         }
     }
 
@@ -219,7 +236,7 @@ class PatientController {
                 return res.status(404).json({ success: false, message: 'Patient not found' });
             }
 
-            const summary = await this.getPatientSummary(req.params.id, req.user.clinic_id);
+            const summary = await this.fetchPatientSummary(req.params.id, req.user.clinic_id);
             res.json({ success: true, data: summary });
         } catch (error) {
             console.error('Error fetching patient summary:', error);
@@ -227,20 +244,20 @@ class PatientController {
         }
     }
 
-    async getPatientSummary(patientId, clinicId) {
+    async fetchPatientSummary(patientId, clinicId) {
         try {
             const [visits] = await db.execute(
-                'SELECT COUNT(*) as total_visits, MAX(visit_date) as last_visit FROM visits WHERE patient_id = ? AND clinic_id = ? AND deleted_at IS NULL',
+                'SELECT COUNT(*) as total_visits, MAX(visit_date) as last_visit FROM visits WHERE patient_id = ? AND clinic_id = ?',
                 [patientId, clinicId]
             );
             
             const [diagnoses] = await db.execute(
-                'SELECT diagnosis_name, COUNT(*) as count FROM visit_diagnoses vd JOIN visits v ON vd.visit_id = v.id WHERE v.patient_id = ? AND v.clinic_id = ? AND v.deleted_at IS NULL GROUP BY diagnosis_name ORDER BY count DESC LIMIT 3',
+                'SELECT diagnosis_name, COUNT(*) as count FROM visit_diagnoses vd JOIN visits v ON vd.visit_id = v.id WHERE v.patient_id = ? AND v.clinic_id = ? GROUP BY diagnosis_name ORDER BY count DESC LIMIT 3',
                 [patientId, clinicId]
             );
             
             const [allergies] = await db.execute(
-                'SELECT allergy_name FROM patient_allergies WHERE patient_id = ? AND deleted_at IS NULL',
+                'SELECT allergen FROM patient_allergies WHERE patient_id = ?',
                 [patientId]
             );
             
@@ -248,7 +265,7 @@ class PatientController {
                 totalVisits: visits[0]?.total_visits || 0,
                 lastVisit: visits[0]?.last_visit,
                 commonDiagnoses: diagnoses.map(d => d.diagnosis_name),
-                allergies: allergies.map(a => a.allergy_name)
+                allergies: allergies.map(a => a.allergen)
             };
         } catch (error) {
             console.error('Error getting patient summary:', error);

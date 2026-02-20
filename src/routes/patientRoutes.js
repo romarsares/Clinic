@@ -15,6 +15,15 @@ const { uploadPhoto } = require('../middleware/upload');
 const router = express.Router();
 const patientController = new PatientController();
 
+/**
+ * @route   GET /api/v1/patients/:id/photo
+ * @desc    Get patient photo (public for img tags)
+ * @access  Public
+ */
+router.get('/:id/photo',
+    (req, res) => patientController.getPhoto(req, res)
+);
+
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
 
@@ -144,13 +153,14 @@ router.get('/:id/history/summary',
 );
 
 /**
- * @route   GET /api/v1/patients/:id/photo
- * @desc    Get patient photo
- * @access  Private (All clinic staff)
+ * @route   DELETE /api/v1/patients/:id
+ * @desc    Delete patient (soft delete)
+ * @access  Private (Admin, Owner)
  */
-router.get('/:id/photo',
-    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Lab Technician', 'Super User']),
-    (req, res) => patientController.getPhoto(req, res)
+router.delete('/:id',
+    requireRole(['Owner', 'Admin', 'Super User']),
+    auditLog('patient', 'delete'),
+    (req, res) => patientController.deletePatient(req, res)
 );
 
 module.exports = router;
