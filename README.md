@@ -69,6 +69,17 @@ npm run dev
 ```
 
 ### Production Deployment
+
+#### Option 1: Automated CI/CD (Recommended)
+```bash
+# Setup CI/CD pipeline (one-time setup)
+# See docs/QUICK-START-CICD.md for detailed instructions
+
+# After setup, simply push to deploy:
+git push origin main  # Automatically deploys to production
+```
+
+#### Option 2: Manual Deployment
 ```bash
 # Run automated deployment
 chmod +x scripts/deploy-ubuntu.sh
@@ -109,6 +120,9 @@ All documentation is organized in the `docs/` directory:
 - **[Development Plan](docs/clinic_saas_development_plan.md)** - Implementation roadmap
 - **[Compliance Guide](docs/clinic_saas_compliance.md)** - Security and regulatory requirements
 - **[Deployment Guide](scripts/DEPLOYMENT.md)** - Production deployment instructions
+- **[CI/CD Quick Start](docs/QUICK-START-CICD.md)** - 5-minute CI/CD setup guide
+- **[CI/CD Setup Guide](docs/CI-CD-SETUP.md)** - Complete CI/CD documentation
+- **[CI/CD Checklist](docs/CI-CD-CHECKLIST.md)** - Step-by-step setup checklist
 
 ## 🛠️ Tech Stack
 
@@ -124,6 +138,7 @@ All documentation is organized in the `docs/` directory:
 - **Containerization**: Docker & Docker Compose
 - **Reverse Proxy**: Nginx
 - **Caching**: Redis
+- **CI/CD**: GitHub Actions with automated deployment
 - **Deployment**: Automated scripts for Ubuntu servers
 
 ### Development Tools
