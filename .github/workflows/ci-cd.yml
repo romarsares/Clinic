@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [clinic-staging, main, develop]
   pull_request:
-    branches: [main]
+    branches: [clinic-staging, main]
 
 env:
   NODE_VERSION: '18'
@@ -73,7 +73,7 @@ jobs:
     name: Deploy to Ubuntu Server
     runs-on: ubuntu-latest
     needs: [test, build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/clinic-staging' && github.event_name == 'push'
     
     steps:
       - uses: actions/checkout@v4
@@ -107,7 +107,7 @@ jobs:
             
             # Pull latest changes
             git fetch origin
-            git reset --hard origin/main
+            git reset --hard origin/clinic-staging
             
             # Install dependencies
             npm ci --production

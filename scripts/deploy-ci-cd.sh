@@ -57,7 +57,7 @@ pull_latest_code() {
     cd "$APP_DIR"
     
     git fetch origin
-    git reset --hard origin/main
+    git reset --hard origin/clinic-staging
     
     log_success "Code updated successfully"
 }
