@@ -84,12 +84,19 @@ router.put('/:id/status',
 
 /**
  * @route   PUT /api/v1/users/:id/password
- * @desc    Change user password
+ * @desc    Change user password (Admin can change without current password)
  * @access  Private (Owner, Admin, SuperAdmin, or own profile)
  */
 router.put('/:id/password',
     auditLog('user', 'password_change'),
-    (req, res) => userController.changePassword(req, res)
+    (req, res) => {
+        // If admin changing another user's password, use adminChangePassword
+        if (req.user.id !== parseInt(req.params.id) && 
+            (req.user.roles.includes('Owner') || req.user.roles.includes('Admin') || req.user.roles.includes('SuperAdmin'))) {
+            return userController.adminChangePassword(req, res);
+        }
+        return userController.changePassword(req, res);
+    }
 );
 
 /**

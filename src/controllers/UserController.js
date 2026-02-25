@@ -8,37 +8,52 @@ const path = require('path');
 
 class UserController {
     /**
+     * Helper to check if user is Owner or SuperAdmin
+     */
+    isOwnerOrSuperAdmin(user) {
+        const roles = user.roles || [];
+        return roles.includes('Owner') || roles.includes('SuperAdmin');
+    }
+
+    /**
      * List users in clinic
      * Required Permission: admin.users
      */
     async listUsers(req, res) {
         try {
-            // Check permission
-            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
-            if (!hasPermission) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Insufficient permissions',
-                    required_permission: 'admin.users'
-                });
+            // Owner and SuperAdmin bypass permission check
+            if (!this.isOwnerOrSuperAdmin(req.user)) {
+                const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
+                if (!hasPermission) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Insufficient permissions',
+                        required_permission: 'admin.users'
+                    });
+                }
             }
 
             const limit = parseInt(req.query.limit) || 50;
             const clinicId = req.user.clinic_id;
             
+            // SuperAdmin can see all clinics, others only their own
+            const isSuperAdmin = req.user.roles.includes('SuperAdmin') || req.user.roles.includes('Super User');
+            const whereClause = isSuperAdmin ? 'WHERE u.deleted_at IS NULL' : 'WHERE u.clinic_id = ? AND u.deleted_at IS NULL';
+            const queryParams = isSuperAdmin ? [] : [clinicId];
+            
             // Simple query without LIMIT to avoid parameter binding issues
             const query = `
-                SELECT u.id, u.email, u.first_name, u.last_name, u.full_name, u.status, u.created_at,
+                SELECT u.id, u.email, u.first_name, u.last_name, u.full_name, u.contact_number, u.address, u.status, u.created_at, u.clinic_id, u.last_login_at,
                        GROUP_CONCAT(r.name) as roles
                 FROM auth_users u
                 LEFT JOIN user_roles ur ON u.id = ur.user_id
                 LEFT JOIN roles r ON ur.role_id = r.id
-                WHERE u.clinic_id = ? AND u.deleted_at IS NULL
+                ${whereClause}
                 GROUP BY u.id
                 ORDER BY u.created_at DESC
             `;
             
-            const [users] = await db.execute(query, [clinicId]);
+            const [users] = await db.execute(query, queryParams);
             
             // Apply limit in JavaScript to avoid SQL parameter issues
             const limitedUsers = users.slice(0, limit);
@@ -66,14 +81,20 @@ class UserController {
      */
     async createUser(req, res) {
         try {
-            // Check permission
-            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
-            if (!hasPermission) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Insufficient permissions',
-                    required_permission: 'admin.users'
-                });
+            // Owner and SuperAdmin bypass permission check
+            const isOwnerOrSuperAdmin = req.user.roles.includes('Owner') || 
+                                       req.user.roles.includes('SuperAdmin') || 
+                                       req.user.roles.includes('Super User');
+            
+            if (!isOwnerOrSuperAdmin) {
+                const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
+                if (!hasPermission) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Insufficient permissions',
+                        required_permission: 'admin.users'
+                    });
+                }
             }
 
             const errors = validationResult(req);
@@ -84,8 +105,12 @@ class UserController {
                 });
             }
 
-            const { email, password, first_name, last_name, role_ids } = req.body;
-            const clinicId = req.user.clinic_id;
+            const { email, password, first_name, last_name, contact_number, address, role_ids } = req.body;
+            
+            // SuperAdmin can specify clinic_id, others use their own
+            const isSuperAdmin = req.user.roles.includes('SuperAdmin') || req.user.roles.includes('Super User');
+            const clinicId = isSuperAdmin && req.body.clinic_id ? req.body.clinic_id : req.user.clinic_id;
+            
             const full_name = `${first_name} ${last_name}`;
 
             // Check if user exists
@@ -106,9 +131,9 @@ class UserController {
 
             // Create user
             const [result] = await db.execute(`
-                INSERT INTO auth_users (clinic_id, email, password_hash, first_name, last_name, full_name, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, 'active', NOW(), NOW())
-            `, [clinicId, email, password_hash, first_name, last_name, full_name]);
+                INSERT INTO auth_users (clinic_id, email, password_hash, first_name, last_name, full_name, contact_number, address, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW(), NOW())
+            `, [clinicId, email, password_hash, first_name, last_name, full_name, contact_number || null, address || null]);
 
             const userId = result.insertId;
 
@@ -128,7 +153,7 @@ class UserController {
                 user_agent: req.get('User-Agent'),
                 method: req.method,
                 url: req.originalUrl,
-                new_value: { email, full_name, role_ids }
+                new_value: { email, full_name, clinic_id: clinicId, role_ids }
             });
 
             res.status(201).json({
@@ -138,6 +163,7 @@ class UserController {
                     id: userId,
                     email,
                     full_name,
+                    clinic_id: clinicId,
                     roles: role_ids || []
                 }
             });
@@ -161,12 +187,9 @@ class UserController {
             const clinicId = req.user.clinic_id;
 
             // Check if user can access this user's details
-            // Super User, Owner, Admin can access any user
-            // Regular users can only access their own details
-            const canAccessAnyUser = req.user.roles.includes('Super User') || 
+            const canAccessAnyUser = req.user.roles.includes('SuperAdmin') || 
                                    req.user.roles.includes('Owner') || 
-                                   req.user.roles.includes('Admin') ||
-                                   req.user.roles.includes('SuperAdmin');
+                                   req.user.roles.includes('Admin');
             
             if (userId !== req.user.id && !canAccessAnyUser) {
                 return res.status(403).json({
@@ -175,18 +198,23 @@ class UserController {
                 });
             }
 
+            // SuperAdmin can access users from any clinic
+            const isSuperAdmin = req.user.roles.includes('SuperAdmin');
+            const whereClause = isSuperAdmin ? 'WHERE u.id = ? AND u.deleted_at IS NULL' : 'WHERE u.id = ? AND u.clinic_id = ? AND u.deleted_at IS NULL';
+            const queryParams = isSuperAdmin ? [userId] : [userId, clinicId];
+
             const query = `
-                SELECT u.id, u.email, u.first_name, u.last_name, u.full_name, u.status, u.created_at,
+                SELECT u.id, u.email, u.first_name, u.last_name, u.full_name, u.status, u.created_at, u.clinic_id, u.contact_number, u.address,
                        GROUP_CONCAT(r.name) as roles,
                        GROUP_CONCAT(r.id) as role_ids
                 FROM auth_users u
                 LEFT JOIN user_roles ur ON u.id = ur.user_id
                 LEFT JOIN roles r ON ur.role_id = r.id
-                WHERE u.id = ? AND u.clinic_id = ? AND u.deleted_at IS NULL
+                ${whereClause}
                 GROUP BY u.id
             `;
 
-            const [users] = await db.execute(query, [userId, clinicId]);
+            const [users] = await db.execute(query, queryParams);
 
             if (users.length === 0) {
                 return res.status(404).json({
@@ -221,21 +249,24 @@ class UserController {
     async updateUser(req, res) {
         try {
             const userId = parseInt(req.params.id);
-            const clinicId = req.user.clinic_id;
-            const { first_name, last_name, email } = req.body;
+            const { first_name, last_name, email, contact_number, address } = req.body;
+            const isSuperAdmin = req.user.roles.includes('SuperAdmin') || req.user.roles.includes('Super User');
 
             // Check permissions
-            if (userId !== req.user.id && !req.user.roles.includes('Owner') && !req.user.roles.includes('Admin')) {
+            if (userId !== req.user.id && !isSuperAdmin && !req.user.roles.includes('Owner') && !req.user.roles.includes('Admin')) {
                 return res.status(403).json({
                     success: false,
                     message: 'Access denied'
                 });
             }
 
-            // Verify user exists and belongs to clinic
+            // Verify user exists
+            const whereClause = isSuperAdmin ? 'WHERE id = ? AND deleted_at IS NULL' : 'WHERE id = ? AND clinic_id = ? AND deleted_at IS NULL';
+            const queryParams = isSuperAdmin ? [userId] : [userId, req.user.clinic_id];
+            
             const [existingUsers] = await db.execute(
-                'SELECT id FROM auth_users WHERE id = ? AND clinic_id = ? AND deleted_at IS NULL',
-                [userId, clinicId]
+                `SELECT id, clinic_id FROM auth_users ${whereClause}`,
+                queryParams
             );
 
             if (existingUsers.length === 0) {
@@ -245,17 +276,18 @@ class UserController {
                 });
             }
 
+            const targetClinicId = existingUsers[0].clinic_id;
             const full_name = `${first_name} ${last_name}`;
 
             await db.execute(`
                 UPDATE auth_users 
-                SET first_name = ?, last_name = ?, full_name = ?, email = ?, updated_at = NOW()
-                WHERE id = ? AND clinic_id = ?
-            `, [first_name, last_name, full_name, email, userId, clinicId]);
+                SET first_name = ?, last_name = ?, full_name = ?, email = ?, contact_number = ?, address = ?, updated_at = NOW()
+                WHERE id = ?
+            `, [first_name, last_name, full_name, email, contact_number || null, address || null, userId]);
 
             // Log user update
             await AuditService.logAction({
-                clinic_id: clinicId,
+                clinic_id: targetClinicId,
                 user_id: req.user.id,
                 action: 'user_update',
                 entity: 'user',
@@ -264,7 +296,7 @@ class UserController {
                 user_agent: req.get('User-Agent'),
                 method: req.method,
                 url: req.originalUrl,
-                new_value: { first_name, last_name, email }
+                new_value: { first_name, last_name, email, contact_number, address }
             });
 
             res.json({
@@ -288,14 +320,20 @@ class UserController {
      */
     async updateUserRoles(req, res) {
         try {
-            // Check permission
-            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.permissions');
-            if (!hasPermission) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Insufficient permissions',
-                    required_permission: 'admin.permissions'
-                });
+            // Owner and SuperAdmin bypass permission check
+            const isOwnerOrSuperAdmin = req.user.roles.includes('Owner') || 
+                                       req.user.roles.includes('SuperAdmin') || 
+                                       req.user.roles.includes('Super User');
+            
+            if (!isOwnerOrSuperAdmin) {
+                const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.permissions');
+                if (!hasPermission) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Insufficient permissions',
+                        required_permission: 'admin.permissions'
+                    });
+                }
             }
 
             const userId = parseInt(req.params.id);
@@ -385,14 +423,20 @@ class UserController {
      */
     async updateUserStatus(req, res) {
         try {
-            // Check permission
-            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
-            if (!hasPermission) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Insufficient permissions',
-                    required_permission: 'admin.users'
-                });
+            // Owner and SuperAdmin bypass permission check
+            const isOwnerOrSuperAdmin = req.user.roles.includes('Owner') || 
+                                       req.user.roles.includes('SuperAdmin') || 
+                                       req.user.roles.includes('Super User');
+            
+            if (!isOwnerOrSuperAdmin) {
+                const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
+                if (!hasPermission) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Insufficient permissions',
+                        required_permission: 'admin.users'
+                    });
+                }
             }
 
             const userId = parseInt(req.params.id);
@@ -448,6 +492,77 @@ class UserController {
             res.status(500).json({
                 success: false,
                 message: 'Failed to update user status',
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Change user password (Admin version - no current password required)
+     */
+    async adminChangePassword(req, res) {
+        try {
+            const userId = parseInt(req.params.id);
+            const { new_password } = req.body;
+
+            // Only Owner, Admin, or SuperAdmin can change other users' passwords
+            if (!req.user.roles.includes('Owner') && !req.user.roles.includes('Admin') && !req.user.roles.includes('SuperAdmin')) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied'
+                });
+            }
+
+            // SuperAdmin can change any user's password
+            const isSuperAdmin = req.user.roles.includes('SuperAdmin');
+            const whereClause = isSuperAdmin ? 'WHERE id = ? AND deleted_at IS NULL' : 'WHERE id = ? AND clinic_id = ? AND deleted_at IS NULL';
+            const queryParams = isSuperAdmin ? [userId] : [userId, req.user.clinic_id];
+
+            // Get user
+            const [users] = await db.execute(
+                `SELECT id, clinic_id FROM auth_users ${whereClause}`,
+                queryParams
+            );
+
+            if (users.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+
+            // Hash new password
+            const new_password_hash = await bcrypt.hash(new_password, 12);
+
+            // Update password
+            await db.execute(
+                'UPDATE auth_users SET password_hash = ?, updated_at = NOW() WHERE id = ?',
+                [new_password_hash, userId]
+            );
+
+            // Log password change
+            await AuditService.logAction({
+                clinic_id: users[0].clinic_id,
+                user_id: req.user.id,
+                action: 'admin_password_change',
+                entity: 'user',
+                entity_id: userId,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+                method: req.method,
+                url: req.originalUrl
+            });
+
+            res.json({
+                success: true,
+                message: 'Password changed successfully'
+            });
+
+        } catch (error) {
+            console.error('Error changing password:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to change password',
                 error: error.message
             });
         }
@@ -708,23 +823,33 @@ class UserController {
      */
     async deleteUser(req, res) {
         try {
-            // Check permission
-            const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
-            if (!hasPermission) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Insufficient permissions',
-                    required_permission: 'admin.users'
-                });
+            // Owner and SuperAdmin bypass permission check
+            const isOwnerOrSuperAdmin = req.user.roles.includes('Owner') || 
+                                       req.user.roles.includes('SuperAdmin') || 
+                                       req.user.roles.includes('Super User');
+            
+            if (!isOwnerOrSuperAdmin) {
+                const hasPermission = await checkUserPermission(req.user.id, req.user.clinic_id, 'admin.users');
+                if (!hasPermission) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Insufficient permissions',
+                        required_permission: 'admin.users'
+                    });
+                }
             }
 
             const userId = parseInt(req.params.id);
-            const clinicId = req.user.clinic_id;
+            const isSuperAdmin = req.user.roles.includes('SuperAdmin') || req.user.roles.includes('Super User');
+
+            // SuperAdmin can delete from any clinic, others only their own
+            const whereClause = isSuperAdmin ? 'WHERE id = ? AND deleted_at IS NULL' : 'WHERE id = ? AND clinic_id = ? AND deleted_at IS NULL';
+            const queryParams = isSuperAdmin ? [userId] : [userId, req.user.clinic_id];
 
             // Verify user exists
             const [existingUsers] = await db.execute(
-                'SELECT id FROM auth_users WHERE id = ? AND clinic_id = ? AND deleted_at IS NULL',
-                [userId, clinicId]
+                `SELECT id, clinic_id FROM auth_users ${whereClause}`,
+                queryParams
             );
 
             if (existingUsers.length === 0) {
@@ -734,10 +859,12 @@ class UserController {
                 });
             }
 
+            const targetClinicId = existingUsers[0].clinic_id;
+
             // Soft delete user
             await db.execute(
-                'UPDATE auth_users SET deleted_at = NOW(), updated_at = NOW() WHERE id = ? AND clinic_id = ?',
-                [userId, clinicId]
+                'UPDATE auth_users SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?',
+                [userId]
             );
 
             // Remove all roles
@@ -745,7 +872,7 @@ class UserController {
 
             // Log user deletion
             await AuditService.logAction({
-                clinic_id: clinicId,
+                clinic_id: targetClinicId,
                 user_id: req.user.id,
                 action: 'user_delete',
                 entity: 'user',
