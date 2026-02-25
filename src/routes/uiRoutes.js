@@ -95,6 +95,16 @@ router.get('/visits', UIController.serveVisits);
 router.get('/users', UIController.serveUsers);
 
 /**
+ * @route   GET /clinics
+ * @desc    Serve clinics management page
+ * @access  Public
+ */
+router.get('/clinics', (req, res) => {
+    const clinicsPath = path.join(__dirname, '../../public/views/clinics.html');
+    res.sendFile(clinicsPath);
+});
+
+/**
  * @route   GET /audit
  * @desc    Serve audit logs page placeholder
  * @access  Public

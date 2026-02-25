@@ -18,6 +18,28 @@ const clinicController = new ClinicController();
 router.use(authenticateToken);
 
 /**
+ * @route   GET /api/v1/clinics/roles
+ * @desc    Get roles for current clinic
+ * @access  Private (Owner, Admin, Staff, Doctor, Super User)
+ */
+router.get('/roles',
+    requireRole(['Owner', 'Admin', 'Staff', 'Doctor', 'Super User']),
+    async (req, res) => {
+        try {
+            const db = require('../config/database');
+            const [roles] = await db.execute(
+                'SELECT id, name, description FROM roles WHERE clinic_id = ? ORDER BY name',
+                [req.user.clinic_id]
+            );
+            res.json({ success: true, data: roles });
+        } catch (error) {
+            console.error('Error loading roles:', error);
+            res.status(500).json({ success: false, message: 'Failed to load roles' });
+        }
+    }
+);
+
+/**
  * @route   POST /api/v1/clinics
  * @desc    Create new clinic (Super User only)
  * @access  Private (Super User)

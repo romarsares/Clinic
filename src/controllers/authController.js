@@ -88,6 +88,12 @@ class AuthController {
         });
       }
 
+      // Update last login timestamp (use UTC)
+      await db.execute(
+        'UPDATE auth_users SET last_login_at = UTC_TIMESTAMP() WHERE id = ?',
+        [user.id]
+      );
+
       // Generate JWT token
       const token = jwt.sign(
         { 
@@ -198,7 +204,7 @@ class AuthController {
   static getLoginValidation() {
     return [
       body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
-      body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+      body('password').notEmpty().withMessage('Password is required')
     ];
   }
 
