@@ -32,6 +32,7 @@ const billingRoutes = require('./billingRoutes');
 const featureRoutes = require('./featureRoutes');
 const dashboardRoutes = require('./dashboardRoutes');
 const userPermissionsRoutes = require('./userPermissionsRoutes');
+const roleRoutes = require('./roleRoutes');
 const { enforceTenantIsolation } = require('../middleware/tenant');
 
 const router = express.Router();
@@ -140,6 +141,12 @@ router.use(`${API_VERSION}/dashboard`, dashboardRoutes);
  * Handles granular permission management
  */
 router.use(`${API_VERSION}/permissions`, userPermissionsRoutes);
+
+/**
+ * Role Management Routes
+ * Handles role CRUD operations
+ */
+router.use(`${API_VERSION}/roles`, roleRoutes);
 
 /**
  * Clinic Management Routes
