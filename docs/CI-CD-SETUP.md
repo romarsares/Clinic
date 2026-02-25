@@ -53,7 +53,7 @@ sudo chown $USER:$USER /opt/clinic-saas
 
 # Clone repository
 cd /opt/clinic-saas
-git clone https://github.com/YOUR-USERNAME/Clinic.git .
+git clonehttps://github.com/romarsares/Clinic.git .
 
 # Create .env file
 cp config/.env.example .env
@@ -97,6 +97,7 @@ Add these secrets:
 # On your Ubuntu server
 cd /opt/clinic-saas
 chmod +x scripts/deploy-ci-cd.sh
+
 ```
 
 ### Step 5: Initial Manual Deployment
@@ -113,7 +114,7 @@ cd /opt/clinic-saas
 # On your local machine
 git add .
 git commit -m "Setup CI/CD pipeline"
-git push origin main
+git push origin clinic-staging
 ```
 
 Watch the GitHub Actions tab in your repository to see the pipeline run.
